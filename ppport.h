@@ -2,7 +2,7 @@
 #ifndef _P_P_PORTABILITY_H_
 #define _P_P_PORTABILITY_H_
 
-/* Perl/Pollution/Portability Version 1.0005 */
+/* Perl/Pollution/Portability Version 1.0006 */
 
 /* Copyright (C) 1999, Kenneth Albanowski. This code may be used and
    distributed under the same license as any version of Perl. */
@@ -156,7 +156,7 @@ __DATA__
 #	define ERRSV perl_get_sv("@",FALSE)
 #endif
 
-#if (PERL_PATCHLEVEL < 4) || ((PERL_PATCHLEVEL == 4) && (PERL_SUBVERSION <= 4))
+#if (PERL_PATCHLEVEL < 4) || ((PERL_PATCHLEVEL == 4) && (PERL_SUBVERSION <= 5))
 /* Replace: 1 */
 #	define PL_sv_undef	sv_undef
 #	define PL_sv_yes	sv_yes
@@ -171,7 +171,7 @@ __DATA__
 /* Replace: 0 */
 #endif
 
-#if (PERL_PATCHLEVEL < 5)
+#ifndef dTHR
 #  ifdef WIN32
 #	define dTHR extern int Perl___notused
 #  else
