@@ -8,7 +8,7 @@
 *
 ********************************************************************************
 *
-*  Version 3.x, Copyright (C) 2003, Marcus Holland-Moritz.
+*  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
 *  Version 2.x, Copyright (C) 2001, Paul Marquess.
 *  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 *
@@ -28,6 +28,9 @@
 #include "XSUB.h"
 
 /* ========== BEGIN XSINIT ================================================== */
+
+/* ---- from parts/inc/call ---- */
+#define NEED_eval_pv
 
 /* ---- from parts/inc/grok ---- */
 #define NEED_grok_number
@@ -88,6 +91,123 @@ BOOT:
 	  MY_CXT.dummy = 42;
 	}
 	
+
+##----------------------------------------------------------------------
+##  XSUBs from parts/inc/call
+##----------------------------------------------------------------------
+
+I32
+G_SCALAR()
+	CODE:
+		RETVAL = G_SCALAR;
+	OUTPUT:
+		RETVAL
+
+I32
+G_ARRAY()
+	CODE:
+		RETVAL = G_ARRAY;
+	OUTPUT:
+		RETVAL
+
+I32
+G_DISCARD()
+	CODE:
+		RETVAL = G_DISCARD;
+	OUTPUT:
+		RETVAL
+
+void
+eval_sv(sv, flags)
+	SV* sv
+	I32 flags
+	PREINIT:
+		I32 i;
+	PPCODE:
+		PUTBACK;
+		i = eval_sv(sv, flags);
+		SPAGAIN;
+		EXTEND(SP, 1);
+		PUSHs(sv_2mortal(newSViv(i)));
+
+void
+eval_pv(p, croak_on_error)
+	char* p
+	I32 croak_on_error
+	PPCODE:
+		PUTBACK;
+		EXTEND(SP, 1);
+		PUSHs(eval_pv(p, croak_on_error));
+
+void
+call_sv(sv, flags, ...)
+	SV* sv
+	I32 flags
+	PREINIT:
+		I32 i;
+	PPCODE:
+		for (i=0; i<items-2; i++)
+		  ST(i) = ST(i+2); /* pop first two args */
+		PUSHMARK(SP);
+		SP += items - 2;
+		PUTBACK;
+		i = call_sv(sv, flags);
+		SPAGAIN;
+		EXTEND(SP, 1);
+		PUSHs(sv_2mortal(newSViv(i)));
+
+void
+call_pv(subname, flags, ...)
+	char* subname
+	I32 flags
+	PREINIT:
+		I32 i;
+	PPCODE:
+		for (i=0; i<items-2; i++)
+		  ST(i) = ST(i+2); /* pop first two args */
+		PUSHMARK(SP);
+		SP += items - 2;
+		PUTBACK;
+		i = call_pv(subname, flags);
+		SPAGAIN;
+		EXTEND(SP, 1);
+		PUSHs(sv_2mortal(newSViv(i)));
+
+void
+call_argv(subname, flags, ...)
+	char* subname
+	I32 flags
+	PREINIT:
+		I32 i;
+		char *args[8];
+	PPCODE:
+		if (items > 8)  /* play safe */
+		  XSRETURN_UNDEF;
+		for (i=2; i<items; i++)
+		  args[i-2] = SvPV_nolen(ST(i));
+		args[items-2] = NULL;
+		PUTBACK;
+		i = call_argv(subname, flags, args);
+		SPAGAIN;
+		EXTEND(SP, 1);
+		PUSHs(sv_2mortal(newSViv(i)));
+
+void
+call_method(methname, flags, ...)
+	char* methname
+	I32 flags
+	PREINIT:
+		I32 i;
+	PPCODE:
+		for (i=0; i<items-2; i++)
+		  ST(i) = ST(i+2); /* pop first two args */
+		PUSHMARK(SP);
+		SP += items - 2;
+		PUTBACK;
+		i = call_method(methname, flags);
+		SPAGAIN;
+		EXTEND(SP, 1);
+		PUSHs(sv_2mortal(newSViv(i)));
 
 ##----------------------------------------------------------------------
 ##  XSUBs from parts/inc/grok
@@ -321,6 +441,51 @@ sv_usepvn_mg(sv, sv2)
 ##  XSUBs from parts/inc/misc
 ##----------------------------------------------------------------------
 
+int
+gv_stashpvn(name, create)
+	char *name
+	I32 create
+	CODE:
+		RETVAL = gv_stashpvn(name, strlen(name), create) != NULL;
+	OUTPUT:
+		RETVAL
+
+int
+get_sv(name, create)
+	char *name
+	I32 create
+	CODE:
+		RETVAL = get_sv(name, create) != NULL;
+	OUTPUT:
+		RETVAL
+
+int
+get_av(name, create)
+	char *name
+	I32 create
+	CODE:
+		RETVAL = get_av(name, create) != NULL;
+	OUTPUT:
+		RETVAL
+
+int
+get_hv(name, create)
+	char *name
+	I32 create
+	CODE:
+		RETVAL = get_hv(name, create) != NULL;
+	OUTPUT:
+		RETVAL
+
+int
+get_cv(name, create)
+	char *name
+	I32 create
+	CODE:
+		RETVAL = get_cv(name, create) != NULL;
+	OUTPUT:
+		RETVAL
+
 void
 newSVpvn()
 	PPCODE:
@@ -380,6 +545,16 @@ int
 ERRSV()
 	CODE:
 		RETVAL = SvTRUE(ERRSV);
+	OUTPUT:
+		RETVAL
+
+SV*
+UNDERBAR()
+	CODE:
+		{
+		  dUNDERBAR;
+		  RETVAL = newSVsv(UNDERBAR);
+		}
 	OUTPUT:
 		RETVAL
 
