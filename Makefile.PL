@@ -4,7 +4,7 @@ use ExtUtils::MakeMaker;
 &WriteMakefile(
 	NAME => "Devel::PPPort",
 	DISTNAME => "Devel-PPPort",
-	VERSION => "1.0006",
+	VERSION => "1.0007",
 	
 	
 	XSPROTOARG => '-noprototypes',
