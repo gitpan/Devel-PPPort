@@ -838,7 +838,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION @ISA $data);
 
-$VERSION = "2.99_04";
+$VERSION = "2.99_05";
 
 @ISA = qw(DynaLoader);
 
@@ -2900,7 +2900,7 @@ for $filename (@files) {
           }
         }
       }
-      if (exists $API{$func}{todo}) {
+      if (exists $API{$func}{todo} && $API{$func}{todo} > $opt{'compat-version'}) {
         if ($c =~ /\b$func\b/) {
           $file{uses_todo}{$func}++;
           push @{$global{uses_todo}{$func}}, $filename;

@@ -35,10 +35,10 @@ BEGIN {
   eval "use Test";
   if ($@) {
     require 'testutil.pl';
-    print "1..128\n";
+    print "1..131\n";
   }
   else {
-    plan(tests => 128);
+    plan(tests => 131);
   }
 }
 
@@ -524,14 +524,26 @@ START_MY_CXT;
 ===============================================================================
 
 my $o = ppport(qw(--nochanges));
-ok($o =~ /^Uses grok_hex/m);
-ok($o !~ /^Looks good/m);
+ok($o =~ /Uses grok_hex/m);
+ok($o !~ /Looks good/m);
 
 $o = ppport(qw(--nochanges --compat-version=5.8.0));
-ok($o !~ /^Uses grok_hex/m);
-ok($o =~ /^Looks good/m);
+ok($o !~ /Uses grok_hex/m);
+ok($o =~ /Looks good/m);
 
 ---------------------------- FooBar.xs ----------------------------------------
 
 grok_hex();
+
+===============================================================================
+
+my $o = ppport(qw(--nochanges));
+ok($o =~ /Uses SvPVutf8_force, which may not be portable/m);
+
+$o = ppport(qw(--nochanges --compat-version=5.6.0));
+ok($o !~ /Uses SvPVutf8_force/m);
+
+---------------------------- FooBar.xs ----------------------------------------
+
+SvPVutf8_force();
 
