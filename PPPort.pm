@@ -8,6 +8,12 @@
 #
 ################################################################################
 #
+#  $Revision: 28 $
+#  $Author: mhx $
+#  $Date: 2004/08/13 12:49:22 +0200 $
+#
+################################################################################
+#
 #  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
@@ -37,7 +43,7 @@ keeping track of old releases, but users can still reap the benefit.
 
 C<Devel::PPPort> contains a single function, called C<WriteFile>. Its
 only purpose is to write the F<ppport.h> C header file. This file
-contains a series of macros and, if explicity requested, functions that
+contains a series of macros and, if explicitly requested, functions that
 allow XS modules to be built using older versions of Perl. Currently,
 Perl versions from 5.003 to 5.9.2 are supported.
 
@@ -331,7 +337,7 @@ in older Perl releases:
 =head2 Perl API not supported by ppport.h
 
 There is still a big part of the API not supported by F<ppport.h>.
-Either because it doesn't make sense to backport that part of the API,
+Either because it doesn't make sense to back-port that part of the API,
 or simply because it hasn't been implemented yet. Patches welcome!
 
 Here's a list of the currently unsupported API, and also the version of
@@ -838,7 +844,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION @ISA $data);
 
-$VERSION = "2.99_06";
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/2.99_07 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 @ISA = qw(DynaLoader);
 
@@ -943,11 +949,13 @@ POD not require any external programs.
 POD 
 POD If neither C<--patch> or C<--copy> are given, the default is to
 POD simply print the diffs for each file. This requires either
-POD Text::Diff or a diff program to be installed.
+POD C<Text::Diff> or a C<diff> program to be installed.
 POD 
 POD =head2 --diff=I<program>
 POD 
-POD Manually set the diff program and options to use.
+POD Manually set the diff program and options to use. The default
+POD is to use C<Text::Diff>, when installed, and output unified
+POD context diffs.
 POD 
 POD =head2 --compat-version=I<version>
 POD 
@@ -1074,16 +1082,35 @@ POD details.
 POD 
 POD =head1 EXAMPLES
 POD 
-POD To verify whether F<ppport.h> is needed for your module,
-POD whether you should make any changes to your code, and whether any
-POD special defines should be used,  F<ppport.h> can be run as
-POD as Perl script to check your source code. Simply say:
+POD To verify whether F<ppport.h> is needed for your module, whether you
+POD should make any changes to your code, and whether any special defines
+POD should be used, F<ppport.h> can be run as a Perl script to check your
+POD source code. Simply say:
 POD 
 POD     perl ppport.h
 POD 
 POD The result will usually be a list of patches suggesting changes
 POD that should at least be acceptable, if not necessarily the most
 POD efficient solution, or a fix for all possible problems.
+POD 
+POD If you know that your XS module uses features only available in
+POD newer Perl releases, if you're aware that it uses C++ comments,
+POD and if you want all suggestions as a single patch file, you could
+POD use something like this:
+POD 
+POD     perl ppport.h --compat-version=5.6.0 --cplusplus --patch=test.diff
+POD 
+POD If you only want your code to be scanned without any suggestions
+POD for changes, use:
+POD 
+POD     perl ppport.h --nochanges
+POD 
+POD You can specify a different C<diff> program or options, using
+POD the C<--diff> option:
+POD 
+POD     perl ppport.h --diff='diff -C 10'
+POD 
+POD This would output context diffs with 10 lines of context.
 POD 
 POD =head1 BUGS
 POD 
@@ -4305,7 +4332,11 @@ DPPP_(sv_2pv_nolen)(pTHX_ register SV *sv)
 
 #ifdef SvPVbyte
 
-/* SvPVbyte does not work in perl-5.6.1, borrowed version for 5.7.3 */
+/* Hint: SvPVbyte
+ * Does not work in perl-5.6.1, ppport.h implements a version
+ * borrowed from perl-5.7.3.
+ */
+
 #if ((PERL_VERSION < 7) || ((PERL_VERSION == 7) && (PERL_SUBVERSION < 0)))
 
 #if defined(NEED_sv_2pvbyte)

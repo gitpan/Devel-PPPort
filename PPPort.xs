@@ -8,6 +8,12 @@
 *
 ********************************************************************************
 *
+*  $Revision: 7 $
+*  $Author: mhx $
+*  $Date: 2004/08/13 12:49:19 +0200 $
+*
+********************************************************************************
+*
 *  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
 *  Version 2.x, Copyright (C) 2001, Paul Marquess.
 *  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
@@ -208,6 +214,24 @@ call_method(methname, flags, ...)
 		SPAGAIN;
 		EXTEND(SP, 1);
 		PUSHs(sv_2mortal(newSViv(i)));
+
+##----------------------------------------------------------------------
+##  XSUBs from parts/inc/cop
+##----------------------------------------------------------------------
+
+char *
+CopSTASHPV()
+	CODE:
+		RETVAL = CopSTASHPV(PL_curcop);
+	OUTPUT:
+		RETVAL
+
+char *
+CopFILE()
+	CODE:
+		RETVAL = CopFILE(PL_curcop);
+	OUTPUT:
+		RETVAL
 
 ##----------------------------------------------------------------------
 ##  XSUBs from parts/inc/grok
