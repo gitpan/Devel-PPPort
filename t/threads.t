@@ -47,5 +47,6 @@ use strict;
 $^W = 1;
 
 ok(&Devel::PPPort::no_THX_arg("42"), 43);
-ok(&Devel::PPPort::with_THX_arg("4711"), 4712);
+eval { &Devel::PPPort::with_THX_arg("yes\n"); };
+ok($@ =~ /^yes/);
 

@@ -35,10 +35,10 @@ BEGIN {
   eval "use Test";
   if ($@) {
     require 'testutil.pl';
-    print "1..112\n";
+    print "1..123\n";
   }
   else {
-    plan(tests => 112);
+    plan(tests => 123);
   }
 }
 
@@ -96,12 +96,16 @@ sub eq_files
   return 0 unless -e $f1 && -e $f2;
   local *F;
   for ($f1, $f2) {
+    print "# File: $_\n";
     unless (open F, $_) {
       print "# couldn't open $_: $!\n";
       return 0;
     }
     $_ = do { local $/; <F> };
     close F;
+    my $copy = $_;
+    $copy =~ s/^/# | /mg;
+    print "$copy\n";
   }
   return $f1 eq $f2;
 }
@@ -169,19 +173,53 @@ Perl_newSViv();
 
 ===============================================================================
 
-# check if C comments are filtered correctly
+# check if C and C++ comments are filtered correctly
 
-my $o = ppport(qw(--nochanges));
+my $o = ppport(qw(--copy=a));
 ok($o =~ /^scanning.*MyExt\.xs/mi);
 ok($o =~ /analyzing.*MyExt\.xs/mi);
 ok(matches($o, '^scanning', 'mi'), 1);
-ok($o =~ /^Looks good/m);
+ok($o =~ /^Needs to include.*ppport\.h/m);
 ok($o !~ /^Uses grok_bin/m);
+ok($o !~ /^Uses newSVpv/m);
+ok($o =~ /Uses 1 C\+\+ style comment/m);
+ok(eq_files('MyExt.xsa', 'MyExt.ra'));
+
+# check if C++ are left untouched with --cplusplus
+
+$o = ppport(qw(--copy=b --cplusplus));
+ok($o =~ /^scanning.*MyExt\.xs/mi);
+ok($o =~ /analyzing.*MyExt\.xs/mi);
+ok(matches($o, '^scanning', 'mi'), 1);
+ok($o =~ /^Needs to include.*ppport\.h/m);
+ok($o !~ /^Uses grok_bin/m);
+ok($o !~ /^Uses newSVpv/m);
+ok($o !~ /Uses \d+ C\+\+ style comment/m);
+ok(eq_files('MyExt.xsb', 'MyExt.rb'));
+
+unlink qw(MyExt.xsa MyExt.xsb);
 
 ---------------------------- MyExt.xs -----------------------------------------
   
-  newSViv();
-XPUSHs(foo);
+newSVuv();
+    // newSVpv();
+  XPUSHs(foo);
+/* grok_bin(); */
+
+---------------------------- MyExt.ra -----------------------------------------
+  
+#include "ppport.h"
+newSVuv();
+    /* newSVpv(); */
+  XPUSHs(foo);
+/* grok_bin(); */
+
+---------------------------- MyExt.rb -----------------------------------------
+  
+#include "ppport.h"
+newSVuv();
+    // newSVpv();
+  XPUSHs(foo);
 /* grok_bin(); */
 
 ===============================================================================
@@ -332,6 +370,7 @@ for (qw(main.xs mod1.c mod2.c mod3.c mod4.c)) {
   ok($o =~ /^Writing copy of.*\Q$_\E.*with changes/mi);
   ok(-e "${_}f");
   ok(eq_files("${_}f", "${_}r"));
+  unlink "${_}f";
 }
 
 ---------------------------- main.xs ------------------------------------------

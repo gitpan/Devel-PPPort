@@ -839,7 +839,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION @ISA $data);
 
-$VERSION = "2.99_02";
+$VERSION = "2.99_03";
 
 @ISA = qw(DynaLoader);
 
@@ -908,6 +908,8 @@ POD   --patch=file         write one patch file with changes
 POD   --copy=suffix        write changed copies with suffix
 POD   --diff=program       use diff program and options
 POD 
+POD   --cplusplus          accept C++ comments
+POD 
 POD   --quiet              don't output anything except fatal errors
 POD   --nodiag             don't show diagnostics
 POD   --nohints            don't show hints
@@ -945,7 +947,14 @@ POD Text::Diff or a diff program to be installed.
 POD 
 POD =head2 --diff=I<program>
 POD 
-POD Manually set the diff program to use.
+POD Manually set the diff program and options to use.
+POD 
+POD =head2 --cplusplus
+POD 
+POD Usually, F<__PPPORT_NAME__> will detect C++ style comments and
+POD replace them with C style comments for portability reasons.
+POD Using this option instructs F<__PPPORT_NAME__> to leave C++
+POD comments untouched.
 POD 
 POD =head2 --quiet
 POD 
@@ -1040,6 +1049,15 @@ POD     newRV_noinc()         NEED_newRV_noinc         NEED_newRV_noinc_GLOBAL
 POD     sv_2pv_nolen()        NEED_sv_2pv_nolen        NEED_sv_2pv_nolen_GLOBAL      
 POD     sv_2pvbyte()          NEED_sv_2pvbyte          NEED_sv_2pvbyte_GLOBAL        
 POD 
+POD To avoid namespace conflicts, you can change the namespace of the
+POD explicitly exported functions using the C<DPPP_NAMESPACE> macro.
+POD Just C<#define> the macro before including C<__PPPORT_NAME__>:
+POD 
+POD     #define DPPP_NAMESPACE MyOwnNamespace_
+POD     #include "__PPPORT_NAME__"
+POD 
+POD The default namespace is C<DPPP_>.
+POD 
 POD =back
 POD 
 POD The good thing is that most of the above can be checked by running
@@ -1120,10 +1138,11 @@ POD See L<Devel::PPPort>.
 use strict;
 
 my %opt = (
-  quiet   => 0,
-  diag    => 1,
-  hints   => 1,
-  changes => 1,
+  quiet     => 0,
+  diag      => 1,
+  hints     => 1,
+  changes   => 1,
+  cplusplus => 0,
 );
 
 my($ppport) = $0 =~ /([\w.]+)$/;
@@ -1133,7 +1152,7 @@ my $HS = "[ \t]";             # horizontal whitespace
 eval {
   require Getopt::Long;
   Getopt::Long::GetOptions(\%opt, qw(
-    help quiet diag! hints! changes!
+    help quiet diag! hints! changes! cplusplus
     patch=s copy=s diff=s
     list-provided list-unsupported
   )) or usage();
@@ -2820,7 +2839,7 @@ for $filename (@files) {
     (/ (?:
         \*[^*]*\*+(?:[^$ccs][^*]*\*+)* /
         |
-        /[^\n]*
+        /[^\r\n]*
       ))
   }{
     defined $2 and push @ccom, $2;
@@ -2891,7 +2910,7 @@ for $need (keys %{$global{needs}}) {
     my $target = shift @targets;
     $files{$target}{needs}{$need} = 'global';
     for (@{$global{needs}{$need}}) {
-      $files{$_}{needs}{$need} = '' if $_ ne $target;
+      $files{$_}{needs}{$need} = 'extern' if $_ ne $target;
     }
   }
 }
@@ -2966,7 +2985,7 @@ for $filename (@files) {
       $message = "No need to define NEED_${func}_GLOBAL if $func is never used";
     }
     elsif (exists $file{needs}{$func}) {
-      if ($file{needs}{$func} eq '') {
+      if ($file{needs}{$func} eq 'extern') {
         $message = "No need to define NEED_${func}_GLOBAL when already needed globally";
       }
       elsif ($file{needs}{$func} eq 'static') {
@@ -2986,9 +3005,17 @@ for $filename (@files) {
 
     for $func (sort keys %{$file{needs}}) {
       my $type = $file{needs}{$func};
-      next if $type eq '';
+      next if $type eq 'extern';
       my $suffix = $type eq 'global' ? '_GLOBAL' : '';
-      $pp .= "#define NEED_$func$suffix\n" unless exists $file{"needed_$type"}{$func};
+      unless (exists $file{"needed_$type"}{$func}) {
+        if ($type eq 'global') {
+          diag("Files [@{$global{needs}{$func}}] need $func, adding global request");
+        }
+        else {
+          diag("File needs $func, adding static request");
+        }
+        $pp .= "#define NEED_$func$suffix\n";
+      }
     }
 
     if ($pp && ($c =~ s/^(?=$HS*#$HS*define$HS+NEED_\w+)/$pp/m)) {
@@ -3017,9 +3044,21 @@ for $filename (@files) {
 
   # put back in our C comments
   my $ix;
+  my $cppc = 0;
   my @ccom = @{$file{ccom}};
   for $ix (0 .. $#ccom) {
-    $c =~ s/$rccs$ix$rcce/$ccom[$ix]/;
+    if (!$opt{cplusplus} && $ccom[$ix] =~ s!^//!!) {
+      $cppc++;
+      $file{changes} += $c =~ s/$rccs$ix$rcce/$ccs$ccom[$ix] $cce/;
+    }
+    else {
+      $c =~ s/$rccs$ix$rcce/$ccom[$ix]/;
+    }
+  }
+
+  if ($cppc) {
+    my $s = $cppc != 1 ? 's' : '';
+    warning("Uses $cppc C++ style comment$s, which is not portable");
   }
 
   if ($file{changes}) {
@@ -3243,12 +3282,12 @@ __DATA__
 #ifndef _P_P_PORTABILITY_H_
 #define _P_P_PORTABILITY_H_
 
-#ifndef DPPP_FUNCTION_PREFIX
-#  define DPPP_FUNCTION_PREFIX DPPP_
+#ifndef DPPP_NAMESPACE
+#  define DPPP_NAMESPACE DPPP_
 #endif
 
 #define DPPP_CAT2(x,y) CAT2(x,y)
-#define DPPP_(name) DPPP_CAT2(DPPP_FUNCTION_PREFIX, name)
+#define DPPP_(name) DPPP_CAT2(DPPP_NAMESPACE, name)
 
 #ifndef PERL_REVISION
 #  ifndef __PATCHLEVEL_H_INCLUDED__
@@ -3763,6 +3802,13 @@ typedef NVTYPE NV;
                                     ? ((len) ? newSVpv((data), (len)) : newSVpv("", 0)) \
                                     : newSV(0))
 #endif
+
+/* Hint: gv_stashpvn
+ * This function's backport doesn't support the length parameter, but
+ * rather ignores it. Portability can only be ensured if the length
+ * parameter is used for speed reasons, but the length can always be
+ * correctly computed from the string argument.
+ */
 #ifndef gv_stashpvn
 #  define gv_stashpvn(str,len,create)    gv_stashpv(str,create)
 #endif

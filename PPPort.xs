@@ -732,13 +732,11 @@ no_THX_arg(sv)
 	OUTPUT:
 		RETVAL
 
-IV
-with_THX_arg(sv)
-	SV *sv
-	CODE:
-		RETVAL = 1 + Perl_sv_2iv(aTHX_ sv);
-	OUTPUT:
-		RETVAL
+void
+with_THX_arg(error)
+	char *error
+	PPCODE:
+		Perl_croak(aTHX_ "%s", error);
 
 ##----------------------------------------------------------------------
 ##  XSUBs from parts/inc/uv
