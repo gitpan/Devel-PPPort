@@ -35,10 +35,10 @@ BEGIN {
   eval "use Test";
   if ($@) {
     require 'testutil.pl';
-    print "1..123\n";
+    print "1..128\n";
   }
   else {
-    plan(tests => 123);
+    plan(tests => 128);
   }
 }
 
@@ -520,4 +520,18 @@ eval_pv();
 #include "ppport.h"
 
 START_MY_CXT;
+
+===============================================================================
+
+my $o = ppport(qw(--nochanges));
+ok($o =~ /^Uses grok_hex/m);
+ok($o !~ /^Looks good/m);
+
+$o = ppport(qw(--nochanges --compat-version=5.8.0));
+ok($o !~ /^Uses grok_hex/m);
+ok($o =~ /^Looks good/m);
+
+---------------------------- FooBar.xs ----------------------------------------
+
+grok_hex();
 
