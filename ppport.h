@@ -2,7 +2,7 @@
 #ifndef _P_P_PORTABILITY_H_
 #define _P_P_PORTABILITY_H_
 
-/* Perl/Pollution/Portability Version 1.0004 */
+/* Perl/Pollution/Portability Version 1.0005 */
 
 /* Copyright (C) 1999, Kenneth Albanowski. This code may be used and
    distributed under the same license as any version of Perl. */
@@ -146,8 +146,10 @@ __DATA__
 #	endif
 #endif
 #ifndef PERL_PATCHLEVEL
+/* Replace: 1 */
 #	define PERL_PATCHLEVEL PATCHLEVEL
 #	define PERL_SUBVERSION SUBVERSION
+/* Replace: 0 */
 #endif
 
 #ifndef ERRSV
@@ -185,6 +187,10 @@ __DATA__
 #	define gv_stashpvn(str,len,flags) gv_stashpv(str,flags)
 #endif
 
+#ifndef newSVpvn
+#	define newSVpvn(data,len) ((len) ? newSVpv ((data), (len)) : newSVpv ("", 0))
+#endif
+
 #ifndef newRV_inc
 /* Replace: 1 */
 #	define newRV_inc(sv) newRV(sv)
@@ -217,7 +223,7 @@ static SV * newRV_noinc (SV * sv)
 /* Provide: newCONSTSUB */
 
 /* newCONSTSUB from IO.xs is in the core starting with 5.004_63 */
-#if (PATCHLEVEL < 4) || ((PATCHLEVEL == 4) && (SUBVERSION < 63))
+#if (PERL_PATCHLEVEL < 4) || ((PERL_PATCHLEVEL == 4) && (PERL_SUBVERSION < 63))
 
 #if defined(NEED_newCONSTSUB)
 static
@@ -244,11 +250,11 @@ SV *sv;
 
 	newSUB(
 
-#if (PATCHLEVEL < 3) || ((PATCHLEVEL == 3) && (SUBVERSION < 22))
+#if (PERL_PATCHLEVEL < 3) || ((PERL_PATCHLEVEL == 3) && (PERL_SUBVERSION < 22))
      /* before 5.003_22 */
 		start_subparse(),
 #else
-#  if (PATCHLEVEL == 3) && (SUBVERSION == 22)
+#  if (PERL_PATCHLEVEL == 3) && (PERL_SUBVERSION == 22)
      /* 5.003_22 */
      		start_subparse(0),
 #  else
