@@ -132,7 +132,9 @@ in older Perl releases:
     CopSTASHPV
     CopSTASHPV_set
     CopyD
+    dAX
     DEFSV
+    dITEMS
     dMY_CXT
     dMY_CXT_SV
     dNOOP
@@ -272,6 +274,7 @@ in older Perl releases:
     PL_perldb
     PL_rsfp
     PL_rsfp_filters
+    PL_stack_base
     PL_stdingv
     PL_Sv
     PL_sv_no
@@ -465,8 +468,6 @@ Perl below which it is unsupported:
 =item perl 5.7.2
 
   calloc
-  dAX
-  dITEMS
   getcwd_sv
   init_tm
   malloc
@@ -844,7 +845,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION @ISA $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/2.99_07 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.00 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 @ISA = qw(DynaLoader);
 
@@ -1438,6 +1439,7 @@ PL_perldb|5.004050||p
 PL_rsfp_filters|5.004050||p
 PL_rsfp|5.004050||p
 PL_rs|||n
+PL_stack_base|||p
 PL_stdingv|5.004050||p
 PL_sv_no|5.004050||pn
 PL_sv_undef|5.004050||pn
@@ -1722,8 +1724,8 @@ cv_undef|||
 cx_dump||5.005000|
 cx_dup|||
 cxinc|||
-dAX||5.007002|
-dITEMS||5.007002|
+dAX|5.007002||p
+dITEMS|5.007002||p
 dMARK|||
 dMY_CXT_SV|5.007003||p
 dMY_CXT|5.007003||p
@@ -3079,7 +3081,7 @@ for $filename (@files) {
     }
 
     if ($pp) {
-      $file{changes} += ($c =~ s/(.*^$HS*#$HS*define$HS+NEED_\w+.*?)^/$1$pp/ms)
+      $file{changes} += ($c =~ s/^($HS*#$HS*define$HS+NEED_\w+.*?)^/$1$pp/ms)
                      || ($c =~ s/^(?=$HS*#$HS*include.*\Q$ppport\E)/$pp/m)
                      || ($c =~ s/^($HS*#$HS*include.*XSUB.*\s*?)^/$1$pp/m)
                      || ($c =~ s/^/$pp/);
@@ -3957,6 +3959,13 @@ typedef NVTYPE NV;
 
 #ifndef UNDERBAR
 #  define UNDERBAR                       DEFSV
+#endif
+#ifndef dAX
+#  define dAX                            I32 ax = MARK - PL_stack_base + 1
+#endif
+
+#ifndef dITEMS
+#  define dITEMS                         I32 items = SP - MARK
 #endif
 #ifndef dTHR
 #  define dTHR                           dNOOP
