@@ -1,36 +1,65 @@
-
 use ExtUtils::MakeMaker;
+require 5.003;
 
-&WriteMakefile(
-	NAME => "Devel::PPPort",
-	DISTNAME => "Devel-PPPort",
-	VERSION => "1.0007",
-	
-	
-	XSPROTOARG => '-noprototypes',
-	PM => {'PPPort.pm' => '$(INST_LIBDIR)/PPPort.pm'},
-	XS => {'PPPort.xs' => 'PPPort.c'},
-	OBJECT => 'PPPort$(OBJ_EXT) module2$(OBJ_EXT) module3$(OBJ_EXT)',
+unless ($ENV{'PERL_CORE'}) {
+  $ENV{'PERL_CORE'} = 1 if grep { $_ eq 'PERL_CORE=1' } @ARGV;
+}
 
-	'dist' => { COMPRESS=>"gzip", SUFFIX=>"gz" }
+if ($ENV{'PERL_CORE'}) {
+  # Pods will be built by installman.
+  @coreopts = ( MAN3PODS => {} );
+}
+else {
+  @coreopts = ();
+}
+
+@ARGV = map { /^--with-(.*)/ && ++$opt{$1} ? () : $_ } @ARGV;
+
+%PL_FILES = ( 'PPPort_pm.PL' => 'PPPort.pm',
+              'PPPort_xs.PL' => 'PPPort.xs',
+              'ppport_h.PL'  => 'ppport.h' ),
+
+@C_FILES  = qw{ module2.c module3.c };
+
+@clean    = qw{ $(H_FILES) PPPort.pm PPPort.c };
+
+if ($opt{'apicheck'}) {
+  $PL_FILES{'apicheck_c.PL'} = 'apicheck.c';
+  push @C_FILES, qw{ apicheck.c };
+  push @clean,   qw{ apicheck.c };
+}
+
+WriteMakefile(
+  NAME          => 'Devel::PPPort',
+  VERSION_FROM  => 'PPPort_pm.PL',
+  PL_FILES      => \%PL_FILES,
+  PM            => { 'PPPort.pm' => '$(INST_LIBDIR)/PPPort.pm' },
+  C             => \@C_FILES,
+  H             => [ qw(ppport.h) ],
+  OBJECT        => '$(BASEEXT)$(OBJ_EXT) $(O_FILES)',
+  XSPROTOARG    => '-noprototypes',
+  clean         => { FILES => "@clean" },
+  depend        => {
+                     '$(OBJECT)'   => '$(H_FILES)',
+                     'ppport_h.PL' => 'PPPort.pm',
+                   },
+  @coreopts,
 );
 
-print <<'EOT';
+sub MY::postamble {
+  package MY;
+  my $post = shift->SUPER::postamble(@_);
+  $post .= <<'POSTAMBLE';
 
-This module does not support installation. If you wish to use ppport.h
-in your own project, simply include it in your distribution. You may
-verify that ppport.h works properly with your particular configuration
-by running 'make test'.
+purge_all: realclean
+	@$(RM_F) PPPort.pm PPPort.xs t/*.t
 
-EOT
+regen:
+	$(PERL) -I$(INST_ARCHLIB) -I$(INST_LIB) -I$(PERL_ARCHLIB) -I$(PERL_LIB) PPPort_pm.PL
+	$(PERL) -I$(INST_ARCHLIB) -I$(INST_LIB) -I$(PERL_ARCHLIB) -I$(PERL_LIB) PPPort_xs.PL
+	$(PERL) -I$(INST_ARCHLIB) -I$(INST_LIB) -I$(PERL_ARCHLIB) -I$(PERL_LIB) mktests.PL
 
-sub MY::install {
-	my $self = shift;
-	<<'EOT';
-install:
-	@echo This module does not support installation. If you wish to use ppport.h
-	@echo in your own project, simply include it in your distribution. You may
-	@echo verify that ppport.h works properly with your particular configuration
-	@echo by running \'make test\'.
-EOT
+POSTAMBLE
+  return $post;
 }
+

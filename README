@@ -1,44 +1,15 @@
+Perl/Pollution/Portability Version 3
 
- Perl/Pollution/Portability Version 1.0005
+THIS IS A BETA RELEASE
 
- Copyright (C) 1999, Kenneth Albanowski. This archive may be used and
- distributed under the same license as any version of Perl.
+There's still quite a lot to do until 3.00. See TODO for
+details. See also perldoc PPPort.pm and perldoc ppport.h
+after you've built the module.
 
- This is not an actual Perl module, but rather a distribution containing a
- small header file designed to aid the portability of the XS modules you
- write. The Makefile.PL is provided primarily to aid in testing the code. 
- (Please notify me about any compile warnings or errors, or test failures.)
- 
- Perl has changed over time, gaining new features, new functions, increasing
- its flexibility, and reducing the impact on the C namespace environment
- (reduced pollution). This header attempts to bring some of the newer Perl
- features to older versions of Perl, so that you can worry less about
- keeping track of old releases, but users can still reap the benefit.
- 
- Why you should use ppport.h in modern code: so that your code will work
- with the widest range of Perl interpreters possible, without significant
- additional work.
- 
- Why you should attempt older code to fully use ppport.h: because the
- reduced pollution of newer Perl versions is an important thing, so
- important that the old polluting ways of original Perl modules will not be
- supported very far into the future, and your module will almost certainly
- break! By adapting to it now, you'll gained compatibility and a sense of
- having done the electronic ecology some good.
- 
 
- How to use ppport.h: Don't direct the user to download Devel::PPPort, and
- don't make ppport.h optional. Rather, just take the most recent copy of
- ppport.h that you can find (probably in Devel::PPPort on CPAN), copy it
- into your project, adjust your project to use it, and distribute the header
- along with your module.
+Version 3.x, Copyright (C) 2003, Marcus Holland-Moritz.
+Version 2.x, Copyright (C) 2001, Paul Marquess.
+Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 
- The file may be able to help you make use of itself. It's got some internal
- documentation, and even an automated script to determine how it could be
- used. However, ppport.h is a work in progress, and may not include every
- feature or macro definition. Feel free to add missing parts, just make sure
- to adjust the version mark so that its clear you've branched from the
- original version.
- 
-	- Kenneth Albanowski <kjahds@kjahds.com>,
-	  February, 1999
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
