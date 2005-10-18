@@ -1,8 +1,8 @@
 ################################################################################
 ##
-##  $Revision: 1 $
+##  $Revision: 3 $
 ##  $Author: mhx $
-##  $Date: 2005/10/18 21:05:53 +0200 $
+##  $Date: 2005/10/18 23:19:42 +0200 $
 ##
 ################################################################################
 ##
@@ -17,6 +17,7 @@
 
 =provides
 
+PL_signals
 PERL_SIGNALS_UNSAFE_FLAG
 
 =implementation
@@ -28,6 +29,10 @@ PERL_SIGNALS_UNSAFE_FLAG
 __NEED_VAR__ U32 PL_signals = PERL_SIGNALS_UNSAFE_FLAG;
 
 #endif
+
+=xsinit
+
+#define NEED_PL_signals
 
 =xsmisc
 

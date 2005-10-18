@@ -8,9 +8,9 @@
 #
 ################################################################################
 #
-#  $Revision: 37 $
+#  $Revision: 38 $
 #  $Author: mhx $
-#  $Date: 2005/10/18 21:10:13 +0200 $
+#  $Date: 2005/10/18 23:04:33 +0200 $
 #
 ################################################################################
 #
@@ -290,6 +290,7 @@ in older Perl releases:
     PL_ppaddr
     PL_rsfp
     PL_rsfp_filters
+    PL_signals
     PL_stack_base
     PL_stack_sp
     PL_stdingv
@@ -903,7 +904,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION @ISA $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.06_02 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.06_03 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 @ISA = qw(DynaLoader);
 
@@ -1489,7 +1490,7 @@ PERL_SCAN_GREATER_THAN_UV_MAX|5.007003||p
 PERL_SCAN_SILENT_ILLDIGIT|5.008001||p
 PERL_SHORT_MAX|5.004000||p
 PERL_SHORT_MIN|5.004000||p
-PERL_SIGNALS_UNSAFE_FLAG|||p
+PERL_SIGNALS_UNSAFE_FLAG|5.008001||p
 PERL_SUBVERSION|5.006000||p
 PERL_UCHAR_MAX|5.004000||p
 PERL_UCHAR_MIN|5.004000||p
@@ -1530,6 +1531,7 @@ PL_ppaddr|5.006000||p
 PL_rsfp_filters|5.004050||p
 PL_rsfp|5.004050||p
 PL_rs|||n
+PL_signals|5.008001||p
 PL_stack_base|5.004050||p
 PL_stack_sp|5.004050||p
 PL_stdingv|5.004050||p
@@ -1741,7 +1743,7 @@ XST_mUV|5.008001||p
 XST_mYES|||
 XS_VERSION_BOOTCHECK|||
 XS_VERSION|||
-XSprePUSH|||p
+XSprePUSH|5.006000||p
 XS|||
 ZeroD|5.009002||p
 Zero|||
@@ -4252,7 +4254,7 @@ typedef NVTYPE NV;
 #define PERL_SIGNALS_UNSAFE_FLAG 0x0001
 
 #if defined(NEED_PL_signals)
-static U32 DPPP_(my_PL_signals)) = PERL_SIGNALS_UNSAFE_FLAG;
+static U32 DPPP_(my_PL_signals) = PERL_SIGNALS_UNSAFE_FLAG;
 #elif defined(NEED_PL_signals_GLOBAL)
 U32 DPPP_(my_PL_signals) = PERL_SIGNALS_UNSAFE_FLAG;
 #else

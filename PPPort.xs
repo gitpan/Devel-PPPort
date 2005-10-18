@@ -62,6 +62,9 @@
 #define NEED_sv_2pv_nolen
 #define NEED_sv_2pvbyte
 
+/* ---- from parts/inc/variables ---- */
+#define NEED_PL_signals
+
 /* =========== END XSINIT =================================================== */
 
 #include "ppport.h"
@@ -931,7 +934,7 @@ SvPVbyte(sv)
 		const char *str;
 	CODE:
 		str = SvPVbyte(sv, len);
-		RETVAL = strEQ(str, "mhx") ? len : -1;
+		RETVAL = strEQ(str, "mhx") ? (IV) len : (IV) -1;
 	OUTPUT:
 		RETVAL
 
