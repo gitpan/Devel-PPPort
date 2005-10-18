@@ -85,6 +85,19 @@ XS(XS_Devel__PPPort_dXSTARG)
   XSRETURN(1);
 }
 
+XS(XS_Devel__PPPort_dAXMARK);  /* prototype */
+XS(XS_Devel__PPPort_dAXMARK)
+{
+  dSP;
+  dAXMARK;
+  dITEMS;
+  IV iv;
+  SP -= items;
+  iv = SvIV(ST(0)) - 1;
+  PUSHs(sv_2mortal(newSViv(iv)));
+  XSRETURN(1);
+}
+
 /* ---- from parts/inc/MY_CXT ---- */
 #define MY_CXT_KEY "Devel::PPPort::_guts" XS_VERSION
 
@@ -146,6 +159,15 @@ static void test_sv_vsetpvf(pTHX_ SV *sv, const char *pat, ...)
   va_end(args);
 }
 
+/* ---- from parts/inc/variables ---- */
+U32 get_PL_signals_1(void)
+{
+  return PL_signals;
+}
+
+extern U32 get_PL_signals_2(void);
+extern U32 get_PL_signals_3(void);
+
 /* =========== END XSMISC =================================================== */
 
 MODULE = Devel::PPPort		PACKAGE = Devel::PPPort
@@ -153,6 +175,7 @@ MODULE = Devel::PPPort		PACKAGE = Devel::PPPort
 BOOT:
 	/* ---- from parts/inc/misc ---- */
 	newXS("Devel::PPPort::dXSTARG", XS_Devel__PPPort_dXSTARG, file);
+	newXS("Devel::PPPort::dAXMARK", XS_Devel__PPPort_dAXMARK, file);
 	
 	/* ---- from parts/inc/MY_CXT ---- */
 	{
@@ -658,6 +681,16 @@ UNDERBAR()
 	OUTPUT:
 		RETVAL
 
+void
+prepush()
+	CODE:
+		{
+		  dXSTARG;
+		  XSprePUSH;
+		  PUSHi(42);
+		  XSRETURN(1);
+		}
+
 ##----------------------------------------------------------------------
 ##  XSUBs from parts/inc/mPUSH
 ##----------------------------------------------------------------------
@@ -992,3 +1025,17 @@ XPUSHu()
 		TARG = sv_newmortal();
 		XPUSHu(43);
 		XSRETURN(1);
+
+##----------------------------------------------------------------------
+##  XSUBs from parts/inc/variables
+##----------------------------------------------------------------------
+
+int
+compare_PL_signals()
+	CODE:
+		{
+		  U32 ref = get_PL_signals_1();
+		  RETVAL = ref == get_PL_signals_2() && ref == get_PL_signals_3();
+		}
+	OUTPUT:
+		RETVAL

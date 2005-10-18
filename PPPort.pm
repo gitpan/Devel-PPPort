@@ -8,9 +8,9 @@
 #
 ################################################################################
 #
-#  $Revision: 36 $
+#  $Revision: 37 $
 #  $Author: mhx $
-#  $Date: 2005/06/25 17:56:28 +0200 $
+#  $Date: 2005/10/18 21:10:13 +0200 $
 #
 ################################################################################
 #
@@ -133,6 +133,7 @@ in older Perl releases:
     CopSTASHPV_set
     CopyD
     dAX
+    dAXMARK
     DEFSV
     dITEMS
     dMY_CXT
@@ -254,6 +255,7 @@ in older Perl releases:
     PERL_SCAN_SILENT_ILLDIGIT
     PERL_SHORT_MAX
     PERL_SHORT_MIN
+    PERL_SIGNALS_UNSAFE_FLAG
     PERL_SUBVERSION
     PERL_UCHAR_MAX
     PERL_UCHAR_MIN
@@ -369,6 +371,7 @@ in older Perl releases:
     XCPT_TRY_START
     XPUSHmortal
     XPUSHu
+    XSprePUSH
     XSRETURN_UV
     XST_mUV
     ZeroD
@@ -391,7 +394,6 @@ Perl below which it is unsupported:
   SvSTASH_set
   SvUV_set
   av_arylen_p
-  dAXMARK
   hv_eiter_p
   hv_eiter_set
   hv_name_set
@@ -901,7 +903,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION @ISA $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.06_01 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.06_02 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 @ISA = qw(DynaLoader);
 
@@ -1026,7 +1028,7 @@ SKIP
 |>Perl version. The default is to check for compatibility with Perl
 |>version 5.003. You can use this option to reduce the output
 |>of F<ppport.h> if you intend to be backward compatible only
-|>up to a certain Perl version.
+|>down to a certain Perl version.
 |>
 |>=head2 --cplusplus
 |>
@@ -1104,30 +1106,36 @@ SKIP
 |>
 |>=item *
 |>
-|>If you use one of a few functions that were not present in earlier
-|>versions of Perl, and that can't be provided using a macro, you have
-|>to explicitly request support for these functions by adding one or
+|>If you use one of a few functions or variables that were not present in
+|>earlier versions of Perl, and that can't be provided using a macro, you
+|>have to explicitly request support for these functions by adding one or
 |>more C<#define>s in your source code before the inclusion of F<ppport.h>.
 |>
-|>These functions will be marked C<explicit> in the list shown by
-|>C<--list-provided>.
+|>These functions or variables will be marked C<explicit> in the list shown
+|>by C<--list-provided>.
 |>
 |>Depending on whether you module has a single or multiple files that
-|>use such functions, you want either C<static> or global variants.
+|>use such functions or variables, you want either C<static> or global
+|>variants.
 |>
-|>For a C<static> function, use:
+|>For a C<static> function or variable (used only in a single source
+|>file), use:
 |>
 |>    #define NEED_function
+|>    #define NEED_variable
 |>
-|>For a global function, use:
+|>For a global function or variable (used in multiple source files),
+|>use:
 |>
 |>    #define NEED_function_GLOBAL
+|>    #define NEED_variable_GLOBAL
 |>
-|>Note that you mustn't have more than one global request for one
-|>function in your project.
+|>Note that you mustn't have more than one global request for the
+|>same function or variable in your project.
 |>
-|>    Function                  Static Request               Global Request
+|>    Function / Variable       Static Request               Global Request
 |>    -----------------------------------------------------------------------------------------
+|>    PL_signals                NEED_PL_signals              NEED_PL_signals_GLOBAL
 |>    eval_pv()                 NEED_eval_pv                 NEED_eval_pv_GLOBAL
 |>    grok_bin()                NEED_grok_bin                NEED_grok_bin_GLOBAL
 |>    grok_hex()                NEED_grok_hex                NEED_grok_hex_GLOBAL
@@ -1145,8 +1153,8 @@ SKIP
 |>    vnewSVpvf()               NEED_vnewSVpvf               NEED_vnewSVpvf_GLOBAL
 |>
 |>To avoid namespace conflicts, you can change the namespace of the
-|>explicitly exported functions using the C<DPPP_NAMESPACE> macro.
-|>Just C<#define> the macro before including C<ppport.h>:
+|>explicitly exported functions / variables using the C<DPPP_NAMESPACE>
+|>macro. Just C<#define> the macro before including C<ppport.h>:
 |>
 |>    #define DPPP_NAMESPACE MyOwnNamespace_
 |>    #include "ppport.h"
@@ -1481,6 +1489,7 @@ PERL_SCAN_GREATER_THAN_UV_MAX|5.007003||p
 PERL_SCAN_SILENT_ILLDIGIT|5.008001||p
 PERL_SHORT_MAX|5.004000||p
 PERL_SHORT_MIN|5.004000||p
+PERL_SIGNALS_UNSAFE_FLAG|||p
 PERL_SUBVERSION|5.006000||p
 PERL_UCHAR_MAX|5.004000||p
 PERL_UCHAR_MIN|5.004000||p
@@ -1732,6 +1741,7 @@ XST_mUV|5.008001||p
 XST_mYES|||
 XS_VERSION_BOOTCHECK|||
 XS_VERSION|||
+XSprePUSH|||p
 XS|||
 ZeroD|5.009002||p
 Zero|||
@@ -1867,7 +1877,7 @@ cv_undef|||
 cx_dump||5.005000|
 cx_dup|||
 cxinc|||
-dAXMARK||5.009003|
+dAXMARK|5.009003||p
 dAX|5.007002||p
 dITEMS|5.007002||p
 dMARK|||
@@ -4228,6 +4238,28 @@ typedef NVTYPE NV;
 #endif
 #ifndef dXSTARG
 #  define dXSTARG                        SV * targ = sv_newmortal()
+#endif
+#ifndef dAXMARK
+#  define dAXMARK                        I32 ax = POPMARK; \
+                               register SV ** const mark = PL_stack_base + ax++
+#endif
+#ifndef XSprePUSH
+#  define XSprePUSH                      (sp = PL_stack_base + ax - 1)
+#endif
+
+#ifndef PERL_SIGNALS_UNSAFE_FLAG
+
+#define PERL_SIGNALS_UNSAFE_FLAG 0x0001
+
+#if defined(NEED_PL_signals)
+static U32 DPPP_(my_PL_signals)) = PERL_SIGNALS_UNSAFE_FLAG;
+#elif defined(NEED_PL_signals_GLOBAL)
+U32 DPPP_(my_PL_signals) = PERL_SIGNALS_UNSAFE_FLAG;
+#else
+extern U32 DPPP_(my_PL_signals);
+#endif
+#define PL_signals DPPP_(my_PL_signals)
+
 #endif
 #ifndef dTHR
 #  define dTHR                           dNOOP
