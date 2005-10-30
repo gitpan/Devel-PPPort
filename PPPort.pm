@@ -8,9 +8,9 @@
 #
 ################################################################################
 #
-#  $Revision: 38 $
+#  $Revision: 39 $
 #  $Author: mhx $
-#  $Date: 2005/10/18 23:04:33 +0200 $
+#  $Date: 2005/10/30 11:25:53 +0100 $
 #
 ################################################################################
 #
@@ -195,6 +195,9 @@ in older Perl releases:
     newRV_noinc
     newSVpvn
     newSVuv
+    Newx
+    Newxc
+    Newxz
     NOOP
     NUM2PTR
     NVef
@@ -373,6 +376,7 @@ in older Perl releases:
     XPUSHmortal
     XPUSHu
     XSprePUSH
+    XSRETURN
     XSRETURN_UV
     XST_mUV
     ZeroD
@@ -904,7 +908,7 @@ require DynaLoader;
 use strict;
 use vars qw($VERSION @ISA $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.06_03 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.06_04 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 @ISA = qw(DynaLoader);
 
@@ -986,6 +990,9 @@ SKIP
 |>  --nochanges                 don't suggest changes
 |>  --nofilter                  don't filter input files
 |>
+|>  --strip                     strip all script and doc functionality from
+|>                              ppport.h (this, obviously, cannot be undone)
+|>
 |>  --list-provided             list provided API
 |>  --list-unsupported          list unsupported API
 |>  --api-info=name             show Perl API portability information
@@ -1061,6 +1068,13 @@ SKIP
 |>
 |>Don't filter the list of input files. By default, files not looking
 |>like source code (i.e. not *.xs, *.c, *.cc, *.cpp or *.h) are skipped.
+|>
+|>=head2 --strip
+|>
+|>Strip all script and documentation functionality from F<ppport.h>.
+|>This reduces the size of F<ppport.h> dramatically and may be useful
+|>if you want to include F<ppport.h> in smaller modules without
+|>increasing their distribution size too much.
 |>
 |>=head2 --list-provided
 |>
@@ -1282,6 +1296,7 @@ my %opt = (
   changes   => 1,
   cplusplus => 0,
   filter    => 1,
+  strip     => 0,
 );
 
 my($ppport) = $0 =~ /([\w.]+)$/;
@@ -1291,7 +1306,7 @@ my $HS = "[ \t]";             # horizontal whitespace
 eval {
   require Getopt::Long;
   Getopt::Long::GetOptions(\%opt, qw(
-    help quiet diag! filter! hints! changes! cplusplus
+    help quiet diag! filter! hints! changes! cplusplus strip
     patch=s copy=s diff=s compat-version=s
     list-provided list-unsupported api-info=s
   )) or usage();
@@ -1303,6 +1318,7 @@ if ($@ and grep /^-/, @ARGV) {
 }
 
 usage() if $opt{help};
+strip() if $opt{strip};
 
 if (exists $opt{'compat-version'}) {
   my($r,$v,$s) = eval { parse_version($opt{'compat-version'}) };
@@ -1412,6 +1428,9 @@ NVef|5.006001||p
 NVff|5.006001||p
 NVgf|5.006001||p
 Newc|||
+Newxc|||p
+Newxz|||p
+Newx|||p
 Newz|||
 New|||
 Nullav|||
@@ -1733,7 +1752,7 @@ XSRETURN_PV|||
 XSRETURN_UNDEF|||
 XSRETURN_UV|5.008001||p
 XSRETURN_YES|||
-XSRETURN|||
+XSRETURN|||p
 XST_mIV|||
 XST_mNO|||
 XST_mNV|||
@@ -3571,6 +3590,35 @@ ENDUSAGE
   exit 2;
 }
 
+sub strip
+{
+  my $self = do { local(@ARGV,$/)=($0); <> };
+  $self =~ s/^$HS+Do NOT edit.*?(?=^-)//ms;
+  $self =~ s/^SKIP.*(?=^__DATA__)/SKIP
+if (\@ARGV && \$ARGV[0] eq '--unstrip') {
+  eval { require Devel::PPPort };
+  \$@ and die "Cannot require Devel::PPPort, please install.\\n";
+  Devel::PPPort::WriteFile(\$0);
+  exit 0;
+}
+print <<END;
+
+Sorry, but this is a stripped version of \$0.
+
+To be able to use its original script and doc functionality,
+please try to regenerate this file using:
+
+  \$^X \$0 --unstrip
+
+END
+/ms;
+
+  open OUT, ">$0" or die "cannot strip $0: $!\n";
+  print OUT $self;
+
+  exit 0;
+}
+
 __DATA__
 */
 
@@ -4004,6 +4052,59 @@ __DATA__
 #  define XPUSHu(u)                      STMT_START { sv_setuv(TARG, (UV)(u)); XPUSHTARG; } STMT_END
 #endif
 
+#ifdef HAS_MEMCMP
+#ifndef memNE
+#  define memNE(s1,s2,l)                 (memcmp(s1,s2,l))
+#endif
+
+#ifndef memEQ
+#  define memEQ(s1,s2,l)                 (!memcmp(s1,s2,l))
+#endif
+
+#else
+#ifndef memNE
+#  define memNE(s1,s2,l)                 (bcmp(s1,s2,l))
+#endif
+
+#ifndef memEQ
+#  define memEQ(s1,s2,l)                 (!bcmp(s1,s2,l))
+#endif
+
+#endif
+#ifndef MoveD
+#  define MoveD(s,d,n,t)                 memmove((char*)(d),(char*)(s), (n) * sizeof(t))
+#endif
+
+#ifndef CopyD
+#  define CopyD(s,d,n,t)                 memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
+#endif
+
+#ifdef HAS_MEMSET
+#ifndef ZeroD
+#  define ZeroD(d,n,t)                   memzero((char*)(d), (n) * sizeof(t))
+#endif
+
+#else
+#ifndef ZeroD
+#  define ZeroD(d,n,t)                   ((void)memzero((char*)(d), (n) * sizeof(t)), d)
+#endif
+
+#endif
+#ifndef Poison
+#  define Poison(d,n,t)                  (void)memset((char*)(d), 0xAB, (n) * sizeof(t))
+#endif
+#ifndef Newx
+#  define Newx(v,n,t)                    New(0,v,n,t)
+#endif
+
+#ifndef Newxc
+#  define Newxc(v,n,t,c)                 Newc(0,v,n,t,c)
+#endif
+
+#ifndef Newxz
+#  define Newxz(v,n,t)                   Newz(0,v,n,t)
+#endif
+
 #if (PERL_VERSION < 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION <= 5))
 /* Replace: 1 */
 #  define PL_DBsingle               DBsingle
@@ -4182,48 +4283,6 @@ typedef NVTYPE NV;
 #endif
 
 /* Replace: 0 */
-
-#ifdef HAS_MEMCMP
-#ifndef memNE
-#  define memNE(s1,s2,l)                 (memcmp(s1,s2,l))
-#endif
-
-#ifndef memEQ
-#  define memEQ(s1,s2,l)                 (!memcmp(s1,s2,l))
-#endif
-
-#else
-#ifndef memNE
-#  define memNE(s1,s2,l)                 (bcmp(s1,s2,l))
-#endif
-
-#ifndef memEQ
-#  define memEQ(s1,s2,l)                 (!bcmp(s1,s2,l))
-#endif
-
-#endif
-#ifndef MoveD
-#  define MoveD(s,d,n,t)                 memmove((char*)(d),(char*)(s), (n) * sizeof(t))
-#endif
-
-#ifndef CopyD
-#  define CopyD(s,d,n,t)                 memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
-#endif
-
-#ifdef HAS_MEMSET
-#ifndef ZeroD
-#  define ZeroD(d,n,t)                   memzero((char*)(d), (n) * sizeof(t))
-#endif
-
-#else
-#ifndef ZeroD
-#  define ZeroD(d,n,t)                   ((void)memzero((char*)(d), (n) * sizeof(t)),d)
-#endif
-
-#endif
-#ifndef Poison
-#  define Poison(d,n,t)                  (void)memset((char*)(d), 0xAB, (n) * sizeof(t))
-#endif
 #ifndef dUNDERBAR
 #  define dUNDERBAR                      dNOOP
 #endif
@@ -4247,6 +4306,15 @@ typedef NVTYPE NV;
 #endif
 #ifndef XSprePUSH
 #  define XSprePUSH                      (sp = PL_stack_base + ax - 1)
+#endif
+
+#if ((PERL_VERSION < 5) || ((PERL_VERSION == 5) && (PERL_SUBVERSION < 0)))
+#  undef XSRETURN
+#  define XSRETURN(off)                                   \
+      STMT_START {                                        \
+          PL_stack_sp = PL_stack_base + ax + ((off) - 1); \
+          return;                                         \
+      } STMT_END
 #endif
 
 #ifndef PERL_SIGNALS_UNSAFE_FLAG

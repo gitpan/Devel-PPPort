@@ -564,6 +564,40 @@ sv_usepvn_mg(sv, sv2)
 		sv_usepvn_mg(sv, copy, len);
 
 ##----------------------------------------------------------------------
+##  XSUBs from parts/inc/memory
+##----------------------------------------------------------------------
+
+int
+checkmem()
+  PREINIT:
+    char *p;
+
+  CODE:
+    RETVAL = 0;
+    Newx(p, 6, char);
+    CopyD("Hello", p, 6, char);
+    if (memEQ(p, "Hello", 6))
+      RETVAL++;
+    ZeroD(p, 6, char);
+    if (memEQ(p, "\0\0\0\0\0\0", 6))
+      RETVAL++;
+    Poison(p, 6, char);
+    if (memNE(p, "\0\0\0\0\0\0", 6))
+      RETVAL++;
+    Safefree(p);
+
+    Newxz(p, 6, char);
+    if (memEQ(p, "\0\0\0\0\0\0", 6))
+      RETVAL++;
+    Safefree(p);
+
+    Newxc(p, 3, short, char);
+    Safefree(p);
+
+  OUTPUT:
+    RETVAL
+
+##----------------------------------------------------------------------
 ##  XSUBs from parts/inc/misc
 ##----------------------------------------------------------------------
 
@@ -621,6 +655,18 @@ newSVpvn()
 		XPUSHs(newSVpvn(NULL, 2));
 		XPUSHs(newSVpvn(NULL, 0));
 		XSRETURN(5);
+
+void
+xsreturn(two)
+	int two
+	PPCODE:
+		XPUSHs(newSVpvn("test1", 5));
+		if (two)
+		  XPUSHs(newSVpvn("test2", 5));
+		if (two)
+		  XSRETURN(2);
+		else
+		  XSRETURN(1);
 
 SV *
 PL_sv_undef()

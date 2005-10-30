@@ -24,10 +24,10 @@ BEGIN {
   eval "use Test";
   if ($@) {
     require 'testutil.pl';
-    print "1..36\n";
+    print "1..38\n";
   }
   else {
-    plan(tests => 36);
+    plan(tests => 38);
   }
 }
 
@@ -102,4 +102,7 @@ ok(Devel::PPPort::dXSTARG(42), 43);
 ok(Devel::PPPort::dAXMARK(4711), 4710);
 
 ok(Devel::PPPort::prepush(), 42);
+
+ok(join(':', Devel::PPPort::xsreturn(0)), 'test1');
+ok(join(':', Devel::PPPort::xsreturn(1)), 'test1:test2');
 
