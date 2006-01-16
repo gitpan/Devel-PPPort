@@ -35,6 +35,15 @@ use Devel::PPPort;
 use strict;
 $^W = 1;
 
+BEGIN {
+  if ($ENV{'SKIP_PPPHTEST'}) {
+    for (1 .. 202) {
+      ok(1);
+    }
+    exit 0;
+  }
+}
+
 use File::Path qw/rmtree mkpath/;
 use Config;
 

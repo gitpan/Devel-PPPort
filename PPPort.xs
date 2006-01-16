@@ -8,13 +8,13 @@
 *
 ********************************************************************************
 *
-*  $Revision: 8 $
+*  $Revision: 9 $
 *  $Author: mhx $
-*  $Date: 2005/01/31 08:10:55 +0100 $
+*  $Date: 2006/01/14 18:07:55 +0100 $
 *
 ********************************************************************************
 *
-*  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
+*  Version 3.x, Copyright (C) 2004-2006, Marcus Holland-Moritz.
 *  Version 2.x, Copyright (C) 2001, Paul Marquess.
 *  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 *
@@ -882,6 +882,36 @@ newRV_noinc_REFCNT()
 		sv_2mortal(rv);
 	OUTPUT:
 		RETVAL
+
+##----------------------------------------------------------------------
+##  XSUBs from parts/inc/Sv_set
+##----------------------------------------------------------------------
+
+IV
+TestSvUV_set(sv, val)
+	SV *sv
+	UV val
+	CODE:
+		SvUV_set(sv, val);
+		RETVAL = SvUVX(sv) == val ? 42 : -1;
+	OUTPUT:
+		RETVAL
+
+IV
+TestSvPVX_const(sv)
+        SV *sv
+        CODE:
+                RETVAL = strEQ(SvPVX_const(sv), "mhx") ? 43 : -1;
+        OUTPUT:
+                RETVAL
+
+IV
+TestSvPVX_mutable(sv)
+        SV *sv
+        CODE:
+                RETVAL = strEQ(SvPVX_mutable(sv), "mhx") ? 44 : -1;
+        OUTPUT:
+                RETVAL
 
 ##----------------------------------------------------------------------
 ##  XSUBs from parts/inc/sv_xpvf
