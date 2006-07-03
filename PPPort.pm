@@ -1011,7 +1011,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.08_06 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.08_07 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1076,6 +1076,8 @@ SKIP
 |>
 |>  --help                      show short help
 |>
+|>  --version                   show version
+|>
 |>  --patch=file                write one patch file with changes
 |>  --copy=suffix               write changed copies with suffix
 |>  --diff=program              use diff program and options
@@ -1090,7 +1092,7 @@ SKIP
 |>  --nofilter                  don't filter input files
 |>
 |>  --strip                     strip all script and doc functionality from
-|>                              ppport.h (this, obviously, cannot be undone)
+|>                              ppport.h
 |>
 |>  --list-provided             list provided API
 |>  --list-unsupported          list unsupported API
@@ -1106,6 +1108,10 @@ SKIP
 |>=head2 --help
 |>
 |>Display a brief usage summary.
+|>
+|>=head2 --version
+|>
+|>Display the version of F<ppport.h>.
 |>
 |>=head2 --patch=I<file>
 |>
@@ -1174,6 +1180,10 @@ SKIP
 |>This reduces the size of F<ppport.h> dramatically and may be useful
 |>if you want to include F<ppport.h> in smaller modules without
 |>increasing their distribution size too much.
+|>
+|>The stripped F<ppport.h> will have a C<--unstrip> option that allows
+|>you to undo the stripping, but only if an appropriate C<Devel::PPPort>
+|>module is installed.
 |>
 |>=head2 --list-provided
 |>
@@ -1390,6 +1400,8 @@ SKIP
 
 use strict;
 
+my $VERSION = __VERSION__;
+
 my %opt = (
   quiet     => 0,
   diag      => 1,
@@ -1398,6 +1410,7 @@ my %opt = (
   cplusplus => 0,
   filter    => 1,
   strip     => 0,
+  version   => 0,
 );
 
 my($ppport) = $0 =~ /([\w.]+)$/;
@@ -1407,7 +1420,7 @@ my $HS = "[ \t]";             # horizontal whitespace
 eval {
   require Getopt::Long;
   Getopt::Long::GetOptions(\%opt, qw(
-    help quiet diag! filter! hints! changes! cplusplus strip
+    help quiet diag! filter! hints! changes! cplusplus strip version
     patch=s copy=s diff=s compat-version=s
     list-provided list-unsupported api-info=s
   )) or usage();
@@ -1416,6 +1429,11 @@ eval {
 if ($@ and grep /^-/, @ARGV) {
   usage() if "@ARGV" =~ /^--?h(?:elp)?$/;
   die "Getopt::Long not found. Please don't use any options.\n";
+}
+
+if ($opt{version}) {
+  print "This is $0 $VERSION.\n";
+  exit 0;
 }
 
 usage() if $opt{help};
@@ -3889,11 +3907,18 @@ ENDUSAGE
 sub strip
 {
   my $self = do { local(@ARGV,$/)=($0); <> };
-  $self =~ s/^$HS+Do NOT edit.*?(?=^-)//ms;
+  my($copy) = $self =~ /^=head\d\s+COPYRIGHT\s*^(.*?)^=\w+/ms;
+  $copy =~ s/^(?=\S+)/    /gms;
+  $self =~ s/^$HS+Do NOT edit.*?(?=^-)/$copy/ms;
   $self =~ s/^SKIP.*(?=^__DATA__)/SKIP
 if (\@ARGV && \$ARGV[0] eq '--unstrip') {
   eval { require Devel::PPPort };
   \$@ and die "Cannot require Devel::PPPort, please install.\\n";
+  if (\$Devel::PPPort::VERSION < $VERSION) {
+    die "$0 was originally generated with Devel::PPPort $VERSION.\\n"
+      . "Your Devel::PPPort is only version \$Devel::PPPort::VERSION.\\n"
+      . "Please install a newer version, or --unstrip will not work.\\n";
+  }
   Devel::PPPort::WriteFile(\$0);
   exit 0;
 }
