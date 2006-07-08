@@ -8,9 +8,9 @@
 #
 ################################################################################
 #
-#  $Revision: 46 $
+#  $Revision: 47 $
 #  $Author: mhx $
-#  $Date: 2006/06/25 03:41:11 +0200 $
+#  $Date: 2006/07/08 11:44:19 +0200 $
 #
 ################################################################################
 #
@@ -486,8 +486,10 @@ Perl below which it is unsupported:
   my_vsnprintf
   newXS_flags
   pad_sv
+  pv_escape
   regclass_swash
   stashpv_hvname_match
+  sv_does
   sv_usepvn_flags
 
 =item perl 5.9.3
@@ -1011,7 +1013,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.08_07 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.09 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -2217,6 +2219,7 @@ dounwind|||
 dowantarray|||
 dump_all||5.006000|
 dump_eval||5.006000|
+dump_exec_pos|||
 dump_fds|||
 dump_form||5.006000|
 dump_indent||5.006000|v
@@ -2224,12 +2227,16 @@ dump_mstats|||
 dump_packsubs||5.006000|
 dump_sub||5.006000|
 dump_sv_child|||
+dump_trie_interim_list|||
+dump_trie_interim_table|||
+dump_trie|||
 dump_vindent||5.006000|
 dumpuntil|||
 dup_attrlist|||
 emulate_eaccess|||
 eval_pv|5.006000||p
 eval_sv|5.006000||p
+exec_failed|||
 expect_number|||
 fbm_compile||5.005000|
 fbm_instr||5.005000|
@@ -2360,6 +2367,7 @@ hv_iterval|||
 hv_kill_backrefs|||
 hv_ksplit||5.004000|
 hv_magic_check|||n
+hv_magic_uvar_xkey|||
 hv_magic|||
 hv_name_set||5.009003|
 hv_notallowed|||
@@ -2468,6 +2476,7 @@ isa_lookup|||
 items|||n
 ix|||n
 jmaybe|||
+join_exact|||
 keyword|||
 leave_scope|||
 lex_end|||
@@ -2550,6 +2559,7 @@ magic_sizepack|||
 magic_wipepack|||
 magicname|||
 make_matcher|||
+make_trie_failtable|||
 make_trie|||
 malloced_size|||n
 malloc||5.007002|n
@@ -2814,8 +2824,10 @@ ptr_table_store|||
 push_scope|||
 put_byte|||
 pv_display||5.006000|
+pv_escape||5.009004|
 pv_uni_display||5.007003|
 qerror|||
+qsortsvu|||
 re_croak2|||
 re_dup|||
 re_intuit_start||5.006000|
@@ -2856,6 +2868,7 @@ regpiece|||
 regpposixcc|||
 regprop|||
 regrepeat|||
+regtail_study|||
 regtail|||
 regtry|||
 reguni|||
@@ -3062,6 +3075,7 @@ sv_copypv||5.007003|
 sv_dec|||
 sv_del_backref|||
 sv_derived_from||5.004000|
+sv_does||5.009004|
 sv_dump|||
 sv_dup|||
 sv_eq|||
