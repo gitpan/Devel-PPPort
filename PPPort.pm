@@ -8,9 +8,9 @@
 #
 ################################################################################
 #
-#  $Revision: 47 $
+#  $Revision: 48 $
 #  $Author: mhx $
-#  $Date: 2006/07/08 11:44:19 +0200 $
+#  $Date: 2006/07/24 21:03:14 +0200 $
 #
 ################################################################################
 #
@@ -195,6 +195,8 @@ in older Perl releases:
     MY_CXT_CLONE
     MY_CXT_INIT
     my_snprintf
+    my_strlcat
+    my_strlcpy
     newCONSTSUB
     newRV_inc
     newRV_noinc
@@ -487,6 +489,7 @@ Perl below which it is unsupported:
   newXS_flags
   pad_sv
   pv_escape
+  pv_pretty
   regclass_swash
   stashpv_hvname_match
   sv_does
@@ -1013,7 +1016,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.09_01 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.09_02 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1269,6 +1272,8 @@ SKIP
 |>    grok_numeric_radix()      NEED_grok_numeric_radix      NEED_grok_numeric_radix_GLOBAL
 |>    grok_oct()                NEED_grok_oct                NEED_grok_oct_GLOBAL
 |>    my_snprintf()             NEED_my_snprintf             NEED_my_snprintf_GLOBAL
+|>    my_strlcat()              NEED_my_strlcat              NEED_my_strlcat_GLOBAL
+|>    my_strlcpy()              NEED_my_strlcpy              NEED_my_strlcpy_GLOBAL
 |>    newCONSTSUB()             NEED_newCONSTSUB             NEED_newCONSTSUB_GLOBAL
 |>    newRV_noinc()             NEED_newRV_noinc             NEED_newRV_noinc_GLOBAL
 |>    sv_2pv_nolen()            NEED_sv_2pv_nolen            NEED_sv_2pv_nolen_GLOBAL
@@ -2130,6 +2135,7 @@ debprofdump||5.005000|
 debprof|||
 debstackptrs||5.007003|
 debstack||5.007003|
+debug_start_match|||
 deb||5.007003|v
 del_sv|||
 delete_eval_scope|||
@@ -2647,6 +2653,8 @@ my_socketpair||5.007003|n
 my_sprintf||5.009003|vn
 my_stat|||
 my_strftime||5.007002|
+my_strlcat|5.009004||pn
+my_strlcpy|5.009004||pn
 my_swabn|||n
 my_swap|||
 my_unexec|||
@@ -2825,6 +2833,7 @@ push_scope|||
 put_byte|||
 pv_display||5.006000|
 pv_escape||5.009004|
+pv_pretty||5.009004|
 pv_uni_display||5.007003|
 qerror|||
 qsortsvu|||
@@ -6794,6 +6803,66 @@ DPPP_(my_my_snprintf)(char *buffer, const Size_t len, const char *format, ...)
 #    define XCPT_CATCH        if (rEtV != 0)
 #    define XCPT_RETHROW      Siglongjmp(top_env, rEtV)
 #  endif
+#endif
+
+#if !defined(my_strlcat)
+#if defined(NEED_my_strlcat)
+static Size_t DPPP_(my_my_strlcat)(char * dst, const char * src, Size_t size);
+static
+#else
+extern Size_t DPPP_(my_my_strlcat)(char * dst, const char * src, Size_t size);
+#endif
+
+#define my_strlcat DPPP_(my_my_strlcat)
+#define Perl_my_strlcat DPPP_(my_my_strlcat)
+
+#if defined(NEED_my_strlcat) || defined(NEED_my_strlcat_GLOBAL)
+
+Size_t
+DPPP_(my_my_strlcat)(char *dst, const char *src, Size_t size)
+{
+    Size_t used, length, copy;
+
+    used = strlen(dst);
+    length = strlen(src);
+    if (size > 0 && used < size - 1) {
+        copy = (length >= size - used) ? size - used - 1 : length;
+        memcpy(dst + used, src, copy);
+        dst[used + copy] = '\0';
+    }
+    return used + length;
+}
+#endif
+#endif
+
+#if !defined(my_strlcpy)
+#if defined(NEED_my_strlcpy)
+static Size_t DPPP_(my_my_strlcpy)(char * dst, const char * src, Size_t size);
+static
+#else
+extern Size_t DPPP_(my_my_strlcpy)(char * dst, const char * src, Size_t size);
+#endif
+
+#define my_strlcpy DPPP_(my_my_strlcpy)
+#define Perl_my_strlcpy DPPP_(my_my_strlcpy)
+
+#if defined(NEED_my_strlcpy) || defined(NEED_my_strlcpy_GLOBAL)
+
+Size_t
+DPPP_(my_my_strlcpy)(char *dst, const char *src, Size_t size)
+{
+    Size_t length, copy;
+
+    length = strlen(src);
+    if (size > 0) {
+        copy = (length >= size) ? size - 1 : length;
+        memcpy(dst, src, copy);
+        dst[copy] = '\0';
+    }
+    return length;
+}
+
+#endif
 #endif
 
 #endif /* _P_P_PORTABILITY_H_ */
