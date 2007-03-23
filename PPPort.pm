@@ -12,9 +12,9 @@
 #
 ################################################################################
 #
-#  $Revision: 51 $
+#  $Revision: 52 $
 #  $Author: mhx $
-#  $Date: 2007/01/02 12:32:27 +0100 $
+#  $Date: 2007/03/23 16:27:19 +0100 $
 #
 ################################################################################
 #
@@ -187,6 +187,7 @@ in older Perl releases:
     IVdf
     IVSIZE
     IVTYPE
+    load_module
     memEQ
     memNE
     MoveD
@@ -309,6 +310,7 @@ in older Perl releases:
     PL_dirty
     PL_dowarn
     PL_errgv
+    PL_expect
     PL_hexdigit
     PL_hints
     PL_laststatval
@@ -417,6 +419,7 @@ in older Perl releases:
     UVuf
     UVXf
     UVxf
+    vload_module
     vnewSVpvf
     WARN_ALL
     WARN_AMBIGUOUS
@@ -805,7 +808,6 @@ Perl below which it is unsupported:
   is_utf8_space
   is_utf8_upper
   is_utf8_xdigit
-  load_module
   magic_dump
   mess
   my_atof
@@ -868,7 +870,6 @@ Perl below which it is unsupported:
   utf8_hop
   vcroak
   vform
-  vload_module
   vmess
   vwarn
   vwarner
@@ -1030,7 +1031,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.11 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.11_01 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1282,6 +1283,7 @@ SKIP
 |>    grok_number()             NEED_grok_number             NEED_grok_number_GLOBAL
 |>    grok_numeric_radix()      NEED_grok_numeric_radix      NEED_grok_numeric_radix_GLOBAL
 |>    grok_oct()                NEED_grok_oct                NEED_grok_oct_GLOBAL
+|>    load_module()             NEED_load_module             NEED_load_module_GLOBAL
 |>    my_snprintf()             NEED_my_snprintf             NEED_my_snprintf_GLOBAL
 |>    my_strlcat()              NEED_my_strlcat              NEED_my_strlcat_GLOBAL
 |>    my_strlcpy()              NEED_my_strlcpy              NEED_my_strlcpy_GLOBAL
@@ -1293,6 +1295,7 @@ SKIP
 |>    sv_catpvf_mg_nocontext()  NEED_sv_catpvf_mg_nocontext  NEED_sv_catpvf_mg_nocontext_GLOBAL
 |>    sv_setpvf_mg()            NEED_sv_setpvf_mg            NEED_sv_setpvf_mg_GLOBAL
 |>    sv_setpvf_mg_nocontext()  NEED_sv_setpvf_mg_nocontext  NEED_sv_setpvf_mg_nocontext_GLOBAL
+|>    vload_module()            NEED_vload_module            NEED_vload_module_GLOBAL
 |>    vnewSVpvf()               NEED_vnewSVpvf               NEED_vnewSVpvf_GLOBAL
 |>    warner()                  NEED_warner                  NEED_warner_GLOBAL
 |>
@@ -1678,6 +1681,7 @@ PL_diehook|5.004050||p
 PL_dirty|5.004050||p
 PL_dowarn|||pn
 PL_errgv|5.004050||p
+PL_expect|||p
 PL_hexdigit|5.005000||p
 PL_hints|5.005000||p
 PL_last_in_gv|||n
@@ -2507,7 +2511,7 @@ linklist|||
 listkids|||
 list|||
 load_module_nocontext|||vn
-load_module||5.006000|v
+load_module|5.006000||pv
 localize|||
 looks_like_bool|||
 looks_like_number|||
@@ -3291,7 +3295,7 @@ vform||5.006000|
 visit|||
 vivify_defelem|||
 vivify_ref|||
-vload_module||5.006000|
+vload_module|5.006000||p
 vmess||5.006000|
 vnewSVpvf|5.006000|5.004000|p
 vnormal||5.009002|
@@ -4746,6 +4750,7 @@ extern U32 DPPP_(my_PL_signals);
 #  define PL_dirty                  dirty
 #  define PL_dowarn                 dowarn
 #  define PL_errgv                  errgv
+#  define PL_expect                 expect
 #  define PL_hexdigit               hexdigit
 #  define PL_hints                  hints
 #  define PL_laststatval            laststatval
@@ -4867,6 +4872,17 @@ extern U32 DPPP_(my_PL_signals);
 #ifndef eval_sv
 #  define eval_sv                        perl_eval_sv
 #endif
+#ifndef PERL_LOADMOD_DENY
+#  define PERL_LOADMOD_DENY              0x1
+#endif
+
+#ifndef PERL_LOADMOD_NOIMPORT
+#  define PERL_LOADMOD_NOIMPORT          0x2
+#endif
+
+#ifndef PERL_LOADMOD_IMPORT_OPS
+#  define PERL_LOADMOD_IMPORT_OPS        0x4
+#endif
 
 /* Replace: 0 */
 
@@ -4907,6 +4923,108 @@ DPPP_(my_eval_pv)(char *p, I32 croak_on_error)
 	croak(SvPVx(GvSV(errgv), na));
 
     return sv;
+}
+
+#endif
+#endif
+
+#ifndef vload_module
+#if defined(NEED_vload_module)
+static void DPPP_(my_vload_module)(U32 flags, SV *name, SV *ver, va_list *args);
+static
+#else
+extern void DPPP_(my_vload_module)(U32 flags, SV *name, SV *ver, va_list *args);
+#endif
+
+#ifdef vload_module
+#  undef vload_module
+#endif
+#define vload_module(a,b,c,d) DPPP_(my_vload_module)(aTHX_ a,b,c,d)
+#define Perl_vload_module DPPP_(my_vload_module)
+
+#if defined(NEED_vload_module) || defined(NEED_vload_module_GLOBAL)
+
+void
+DPPP_(my_vload_module)(U32 flags, SV *name, SV *ver, va_list *args)
+{
+    dTHR;
+    dVAR;
+    OP *veop, *imop;
+
+    OP * const modname = newSVOP(OP_CONST, 0, name);
+    /* 5.005 has a somewhat hacky force_normal that doesn't croak on
+       SvREADONLY() if PL_compling is true. Current perls take care in
+       ck_require() to correctly turn off SvREADONLY before calling
+       force_normal_flags(). This seems a better fix than fudging PL_compling
+     */
+    SvREADONLY_off(((SVOP*)modname)->op_sv);
+    modname->op_private |= OPpCONST_BARE;
+    if (ver) {
+	veop = newSVOP(OP_CONST, 0, ver);
+    }
+    else
+	veop = NULL;
+    if (flags & PERL_LOADMOD_NOIMPORT) {
+	imop = sawparens(newNULLLIST());
+    }
+    else if (flags & PERL_LOADMOD_IMPORT_OPS) {
+	imop = va_arg(*args, OP*);
+    }
+    else {
+	SV *sv;
+	imop = NULL;
+	sv = va_arg(*args, SV*);
+	while (sv) {
+	    imop = append_elem(OP_LIST, imop, newSVOP(OP_CONST, 0, sv));
+	    sv = va_arg(*args, SV*);
+	}
+    }
+    {
+	const line_t ocopline = PL_copline;
+	COP * const ocurcop = PL_curcop;
+	const int oexpect = PL_expect;
+
+#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0)))
+	utilize(!(flags & PERL_LOADMOD_DENY), start_subparse(FALSE, 0),
+		veop, modname, imop);
+#else
+	utilize(!(flags & PERL_LOADMOD_DENY), start_subparse(),
+		modname, imop);
+#endif
+	PL_expect = oexpect;
+	PL_copline = ocopline;
+	PL_curcop = ocurcop;
+    }
+}
+
+#endif
+#endif
+
+/* load_module depends on vload_module */
+
+#ifndef load_module
+#if defined(NEED_load_module)
+static void DPPP_(my_load_module)(U32 flags, SV *name, SV *ver, ...);
+static
+#else
+extern void DPPP_(my_load_module)(U32 flags, SV *name, SV *ver, ...);
+#endif
+
+#ifdef load_module
+#  undef load_module
+#endif
+#define load_module DPPP_(my_load_module)
+#define Perl_load_module DPPP_(my_load_module)
+
+#if defined(NEED_load_module) || defined(NEED_load_module_GLOBAL)
+
+void
+DPPP_(my_load_module)(U32 flags, SV *name, SV *ver, ...)
+{
+    va_list args;
+    va_start(args, ver);
+    vload_module(flags, name, ver, &args);
+    va_end(args);
 }
 
 #endif
