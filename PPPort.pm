@@ -376,8 +376,6 @@ in older Perl releases:
     sv_magic_portable
     SV_MUTABLE_RETURN
     SV_NOSTEAL
-    sv_pvn
-    sv_pvn_force
     sv_pvn_force_flags
     sv_pvn_nomg
     sv_setiv_mg
@@ -1092,7 +1090,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.11_02 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.11_03 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -3296,9 +3294,9 @@ sv_pvbyten_force||5.006000|
 sv_pvbyten||5.006000|
 sv_pvbyte||5.006000|
 sv_pvn_force_flags|5.007002||p
-sv_pvn_force|||p
+sv_pvn_force|||
 sv_pvn_nomg|5.007003||p
-sv_pvn|5.005000||p
+sv_pvn|||
 sv_pvutf8n_force||5.006000|
 sv_pvutf8n||5.006000|
 sv_pvutf8||5.006000|
@@ -3485,6 +3483,18 @@ my(%replace, %need, %hints, %warnings, %depends);
 my $replace = 0;
 my($hint, $define, $function);
 
+sub find_api
+{
+  my $code = shift;
+  $code =~ s{
+    ([^"'/]+)
+  | / (?: \*[^*]*\*+(?:[^$ccs][^*]*\*+)* / | /[^\r\n]*)
+  | (?:"[^"\\]*(?:\\.[^"\\]*)*" [^"'/]*)+
+  | (?:'[^'\\]*(?:\\.[^'\\]*)*' [^"'/]*)+
+  }{ defined $1 ? $1 : '' }egsx;
+  grep { exists $API{$_} } $code =~ /(\w+)/mg;
+}
+
 while (<DATA>) {
   if ($hint) {
     my $h = $hint->[0] eq 'Hint' ? \%hints : \%warnings;
@@ -3507,7 +3517,7 @@ while (<DATA>) {
     }
     else {
       if (exists $API{$define->[0]} && $define->[1] !~ /^DPPP_\(/) {
-        my @n = grep { exists $API{$_} } $define->[1] =~ /(\w+)/mg;
+        my @n = find_api($define->[1]);
         push @{$depends{$define->[0]}}, @n if @n
       }
       undef $define;
@@ -3519,7 +3529,7 @@ while (<DATA>) {
   if ($function) {
     if (/^}/) {
       if (exists $API{$function->[0]}) {
-        my @n = grep { exists $API{$_} } $function->[1] =~ /(\w+)/mg;
+        my @n = find_api($function->[1]);
         push @{$depends{$function->[0]}}, @n if @n
       }
       undef $define;
@@ -3670,23 +3680,13 @@ for $filename (@files) {
   # temporarily remove C comments from the code
   my @ccom;
   $c =~ s{
-    (
-        [^"'/]+
-      |
-        (?:"[^"\\]*(?:\\.[^"\\]*)*" [^"'/]*)+
-      |
-        (?:'[^'\\]*(?:\\.[^'\\]*)*' [^"'/]*)+
-    )
-  |
-    (/ (?:
-        \*[^*]*\*+(?:[^$ccs][^*]*\*+)* /
-        |
-        /[^\r\n]*
-      ))
-  }{
-    defined $2 and push @ccom, $2;
-    defined $1 ? $1 : "$ccs$#ccom$cce";
-  }egsx;
+    ( [^"'/]+
+    | (?:"[^"\\]*(?:\\.[^"\\]*)*" [^"'/]*)+
+    | (?:'[^'\\]*(?:\\.[^'\\]*)*' [^"'/]*)+ )
+  | (/ (?: \*[^*]*\*+(?:[^$ccs][^*]*\*+)* /
+         | /[^\r\n]* ) )
+  }{ defined $2 and push @ccom, $2;
+     defined $1 ? $1 : "$ccs$#ccom$cce" }egsx;
 
   $file{ccom} = \@ccom;
   $file{code} = $c;
@@ -4043,10 +4043,12 @@ sub can_use
 
 sub rec_depend
 {
-  my $func = shift;
-  my %seen;
+  my($func, $seen) = @_;
   return () unless exists $depends{$func};
-  grep !$seen{$_}++, map { ($_, rec_depend($_)) } @{$depends{$func}};
+  $seen = {%{$seen||{}}};
+  return () if $seen->{$func}++;
+  my %s;
+  grep !$s{$_}++, map { ($_, rec_depend($_, $seen)) } @{$depends{$func}};
 }
 
 sub parse_version
@@ -4231,7 +4233,8 @@ __DATA__
 #  endif
 #endif
 
-#define PERL_BCDVERSION ((PERL_REVISION * 0x1000000L) + (PERL_VERSION * 0x1000L) + PERL_SUBVERSION)
+#define _dpppDEC2BCD(dec) ((((dec)/100)<<8)|((((dec)%100)/10)<<4)|((dec)%10))
+#define PERL_BCDVERSION ((_dpppDEC2BCD(PERL_REVISION)<<24)|(_dpppDEC2BCD(PERL_VERSION)<<12)|_dpppDEC2BCD(PERL_SUBVERSION))
 
 /* It is very unlikely that anyone will try to use this with Perl 6
    (or greater), but who knows.
@@ -5624,16 +5627,10 @@ DPPP_(my_sv_2pvbyte)(pTHX_ register SV *sv, STRLEN *lp)
 /* Hint: sv_pvn
  * Always use the SvPV() macro instead of sv_pvn().
  */
-#ifndef sv_pvn
-#  define sv_pvn(sv, len)                SvPV(sv, len)
-#endif
 
 /* Hint: sv_pvn_force
  * Always use the SvPV_force() macro instead of sv_pvn_force().
  */
-#ifndef sv_pvn_force
-#  define sv_pvn_force(sv, len)          SvPV_force(sv, len)
-#endif
 
 /* If these are undefined, they're not handled by the core anyway */
 #ifndef SV_IMMEDIATE_UNREF
