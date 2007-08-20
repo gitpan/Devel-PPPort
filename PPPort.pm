@@ -1092,7 +1092,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.11_04 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.11_05 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -4920,7 +4920,7 @@ typedef NVTYPE NV;
 #ifndef PERL_HASH
 #  define PERL_HASH(hash,str,len)        \
      STMT_START	{ \
-	char *s_PeRlHaSh = str; \
+	const char *s_PeRlHaSh = str; \
 	I32 i_PeRlHaSh = len; \
 	U32 hash_PeRlHaSh = 0; \
 	while (i_PeRlHaSh--) \
@@ -6646,20 +6646,23 @@ DPPP_(my_warner)(U32 err, const char *pat, ...)
 
 #elif (PERL_BCDVERSION < 0x5008000)
 
-#  define sv_magic_portable(sv, obj, how, name, namlen)         \
-   STMT_START {                                                 \
-     if (name && namlen == 0)                                   \
-     {                                                          \
-       MAGIC *mg;                                               \
-       sv_magic(sv, obj, how, 0, 0);                            \
-       mg = SvMAGIC(sv);                                        \
-       mg->mg_len = -42; /* XXX: this is the tricky part */     \
-       mg->mg_ptr = name;                                       \
-     }                                                          \
-     else                                                       \
-     {                                                          \
-       sv_magic(sv, obj, how, name, namlen);                    \
-     }                                                          \
+#  define sv_magic_portable(sv, obj, how, name, namlen)     \
+   STMT_START {                                             \
+     SV *SvMp_sv = (sv);                                    \
+     char *SvMp_name = (char *) (name);                     \
+     I32 SvMp_namlen = (namlen);                            \
+     if (SvMp_name && SvMp_namlen == 0)                     \
+     {                                                      \
+       MAGIC *mg;                                           \
+       sv_magic(SvMp_sv, obj, how, 0, 0);                   \
+       mg = SvMAGIC(SvMp_sv);                               \
+       mg->mg_len = -42; /* XXX: this is the tricky part */ \
+       mg->mg_ptr = SvMp_name;                              \
+     }                                                      \
+     else                                                   \
+     {                                                      \
+       sv_magic(SvMp_sv, obj, how, SvMp_name, SvMp_namlen); \
+     }                                                      \
    } STMT_END
 
 #else
