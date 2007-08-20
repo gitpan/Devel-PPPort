@@ -12,9 +12,9 @@
 #
 ################################################################################
 #
-#  $Revision: 54 $
+#  $Revision: 55 $
 #  $Author: mhx $
-#  $Date: 2007/08/13 00:03:11 +0200 $
+#  $Date: 2007/08/19 19:41:37 +0200 $
 #
 ################################################################################
 #
@@ -209,6 +209,7 @@ in older Perl releases:
     newRV_inc
     newRV_noinc
     newSVpvn
+    newSVpvn_share
     newSVpvs
     newSVuv
     Newx
@@ -224,6 +225,7 @@ in older Perl releases:
     PERL_ABS
     PERL_BCDVERSION
     PERL_GCC_BRACE_GROUPS_FORBIDDEN
+    PERL_HASH
     PERL_INT_MAX
     PERL_INT_MIN
     PERL_LONG_MAX
@@ -432,6 +434,7 @@ in older Perl releases:
     SvREFCNT_inc_void
     SvREFCNT_inc_void_NN
     SvRV_set
+    SvSHARED_HASH
     SvSTASH_set
     SvUOK
     SvUV
@@ -752,7 +755,6 @@ Perl below which it is unsupported:
   gv_handler
   is_lvalue_sub
   my_popen_list
-  newSVpvn_share
   save_mortalizesv
   save_padsv
   scan_num
@@ -1090,7 +1092,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.11_03 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.11_04 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1351,6 +1353,7 @@ SKIP
 |>    my_strlcpy()              NEED_my_strlcpy              NEED_my_strlcpy_GLOBAL
 |>    newCONSTSUB()             NEED_newCONSTSUB             NEED_newCONSTSUB_GLOBAL
 |>    newRV_noinc()             NEED_newRV_noinc             NEED_newRV_noinc_GLOBAL
+|>    newSVpvn_share()          NEED_newSVpvn_share          NEED_newSVpvn_share_GLOBAL
 |>    sv_2pv_flags()            NEED_sv_2pv_flags            NEED_sv_2pv_flags_GLOBAL
 |>    sv_2pvbyte()              NEED_sv_2pvbyte              NEED_sv_2pvbyte_GLOBAL
 |>    sv_catpvf_mg()            NEED_sv_catpvf_mg            NEED_sv_catpvf_mg_GLOBAL
@@ -1488,6 +1491,9 @@ SKIP
 
 use strict;
 
+# Disable broken TRIE-optimization
+BEGIN { eval '${^RE_TRIE_MAXBUF} = -1' if $] >= 5.009004 && $] <= 5.009005 }
+
 my $VERSION = __VERSION__;
 
 my %opt = (
@@ -1504,6 +1510,12 @@ my %opt = (
 my($ppport) = $0 =~ /([\w.]+)$/;
 my $LF = '(?:\r\n|[\r\n])';   # line feed
 my $HS = "[ \t]";             # horizontal whitespace
+
+# Never use C comments in this file!
+my $ccs  = '/'.'*';
+my $cce  = '*'.'/';
+my $rccs = quotemeta $ccs;
+my $rcce = quotemeta $cce;
 
 eval {
   require Getopt::Long;
@@ -1539,12 +1551,6 @@ if (exists $opt{'compat-version'}) {
 else {
   $opt{'compat-version'} = 5;
 }
-
-# Never use C comments in this file!!!!!
-my $ccs  = '/'.'*';
-my $cce  = '*'.'/';
-my $rccs = quotemeta $ccs;
-my $rcce = quotemeta $cce;
 
 my %API = map { /^(\w+)\|([^|]*)\|([^|]*)\|(\w*)$/
                 ? ( $1 => {
@@ -1663,6 +1669,7 @@ PAD_SV|||
 PERL_ABS|5.008001||p
 PERL_BCDVERSION|5.009005||p
 PERL_GCC_BRACE_GROUPS_FORBIDDEN|5.008001||p
+PERL_HASH|5.004000||p
 PERL_INT_MAX|5.004000||p
 PERL_INT_MIN|5.004000||p
 PERL_LONG_MAX|5.004000||p
@@ -1963,6 +1970,7 @@ SvRV|||
 SvRXOK||5.009005|
 SvRX||5.009005|
 SvSETMAGIC|||
+SvSHARED_HASH|5.009003||p
 SvSHARE||5.007003|
 SvSTASH_set|5.009003||p
 SvSTASH|||
@@ -2849,7 +2857,7 @@ newSViv|||
 newSVnv|||
 newSVpvf_nocontext|||vn
 newSVpvf||5.004000|v
-newSVpvn_share||5.007001|
+newSVpvn_share|5.007001||p
 newSVpvn|5.004050||p
 newSVpvs_share||5.009003|
 newSVpvs|5.009003||p
@@ -3487,11 +3495,9 @@ sub find_api
 {
   my $code = shift;
   $code =~ s{
-    ([^"'/]+)
-  | / (?: \*[^*]*\*+(?:[^$ccs][^*]*\*+)* / | /[^\r\n]*)
-  | (?:"[^"\\]*(?:\\.[^"\\]*)*" [^"'/]*)+
-  | (?:'[^'\\]*(?:\\.[^'\\]*)*' [^"'/]*)+
-  }{ defined $1 ? $1 : '' }egsx;
+    / (?: \*[^*]*\*+(?:[^$ccs][^*]*\*+)* / | /[^\r\n]*)
+  | "[^"\\]*(?:\\.[^"\\]*)*"
+  | '[^'\\]*(?:\\.[^'\\]*)*' }{}egsx;
   grep { exists $API{$_} } $code =~ /(\w+)/mg;
 }
 
@@ -3504,12 +3510,11 @@ while (<DATA>) {
         $h->{$_} .= "$1\n";
       }
     }
-    else {
-      undef $hint;
-    }
+    else { undef $hint }
   }
 
-  $hint = [$1, [split /,?\s+/, $2]] if m{^\s*$rccs\s+(Hint|Warning):\s+(\w+(?:,?\s+\w+)*)\s*$};
+  $hint = [$1, [split /,?\s+/, $2]]
+      if m{^\s*$rccs\s+(Hint|Warning):\s+(\w+(?:,?\s+\w+)*)\s*$};
 
   if ($define) {
     if ($define->[1] =~ /\\$/) {
@@ -3580,17 +3585,11 @@ if (exists $opt{'api-info'}) {
       print "\nWARNING:\n$warnings{$f}" if exists $warnings{$f};
       $info++;
     }
-    unless ($info) {
-      print "No portability information available.\n";
-    }
+    print "No portability information available.\n" unless $info;
     $count++;
   }
-  if ($count > 0) {
-    print "\n";
-  }
-  else {
-    print "Found no API matching '$opt{'api-info'}'.\n";
-  }
+  $count or print "Found no API matching '$opt{'api-info'}'.";
+  print "\n";
   exit 0;
 }
 
@@ -3655,9 +3654,7 @@ if (!@ARGV || $opt{filter}) {
   @files = @in;
 }
 
-unless (@files) {
-  die "No input files given!\n";
-}
+die "No input files given!\n" unless @files;
 
 my(%files, %global, %revreplace);
 %revreplace = reverse %replace;
@@ -3677,20 +3674,22 @@ for $filename (@files) {
 
   my %file = (orig => $c, changes => 0);
 
-  # temporarily remove C comments from the code
+  # Temporarily remove C/XS comments and strings from the code
   my @ccom;
+
   $c =~ s{
-    ( [^"'/]+
-    | (?:"[^"\\]*(?:\\.[^"\\]*)*" [^"'/]*)+
-    | (?:'[^'\\]*(?:\\.[^'\\]*)*' [^"'/]*)+ )
-  | (/ (?: \*[^*]*\*+(?:[^$ccs][^*]*\*+)* /
-         | /[^\r\n]* ) )
+    ( ^$HS*\#$HS*include\b[^\r\n]+\b(?:\Q$ppport\E|XSUB\.h)\b[^\r\n]*
+    | ^$HS*\#$HS*(?:define|elif|if(?:def)?)\b[^\r\n]* )
+  | ( ^$HS*\#[^\r\n]*
+    | "[^"\\]*(?:\\.[^"\\]*)*"
+    | '[^'\\]*(?:\\.[^'\\]*)*'
+    | / (?: \*[^*]*\*+(?:[^$ccs][^*]*\*+)* / | /[^\r\n]* ) )
   }{ defined $2 and push @ccom, $2;
-     defined $1 ? $1 : "$ccs$#ccom$cce" }egsx;
+     defined $1 ? $1 : "$ccs$#ccom$cce" }mgsex;
 
   $file{ccom} = \@ccom;
   $file{code} = $c;
-  $file{has_inc_ppport} = ($c =~ /#.*include.*\Q$ppport\E/);
+  $file{has_inc_ppport} = $c =~ /^$HS*#$HS*include[^\r\n]+\b\Q$ppport\E\b/m;
 
   my $func;
 
@@ -3712,9 +3711,7 @@ for $filename (@files) {
             }
           }
           for ($func, @deps) {
-            if (exists $need{$_}) {
-              $file{needs}{$_} = 'static';
-            }
+            $file{needs}{$_} = 'static' if exists $need{$_};
           }
         }
       }
@@ -3730,9 +3727,7 @@ for $filename (@files) {
     if (exists $need{$2}) {
       $file{defined $3 ? 'needed_global' : 'needed_static'}{$2}++;
     }
-    else {
-      warning("Possibly wrong #define $1 in $filename");
-    }
+    else { warning("Possibly wrong #define $1 in $filename") }
   }
 
   for (qw(uses needs uses_todo needed_global needed_static)) {
@@ -3966,6 +3961,8 @@ close PATCH if $patch_opened;
 exit 0;
 
 
+sub try_use { eval "use @_;"; return $@ eq '' }
+
 sub mydiff
 {
   local *F = shift;
@@ -3976,7 +3973,7 @@ sub mydiff
     $diff = run_diff($opt{diff}, $file, $str);
   }
 
-  if (!defined $diff and can_use('Text::Diff')) {
+  if (!defined $diff and try_use('Text::Diff')) {
     $diff = Text::Diff::diff($file, \$str, { STYLE => 'Unified' });
     $diff = <<HEADER . $diff;
 --- $file
@@ -3998,7 +3995,6 @@ HEADER
   }
 
   print F $diff;
-
 }
 
 sub run_diff
@@ -4033,12 +4029,6 @@ sub run_diff
   }
 
   return undef;
-}
-
-sub can_use
-{
-  eval "use @_;";
-  return $@ eq '';
 }
 
 sub rec_depend
@@ -4195,9 +4185,19 @@ please try to regenerate this file using:
 
 END
 /ms;
+  my($pl, $c) = $self =~ /(.*^__DATA__)(.*)/ms;
+  $c =~ s{
+    / (?: \*[^*]*\*+(?:[^$ccs][^*]*\*+)* / | /[^\r\n]*)
+  | ( "[^"\\]*(?:\\.[^"\\]*)*"
+    | '[^'\\]*(?:\\.[^'\\]*)*' )
+  | ($HS+) }{ defined $2 ? ' ' : ($1 || '') }gsex;
+  $c =~ s!\s+$!!mg;
+  $c =~ s!^$LF!!mg;
+  $c =~ s!^\s*#\s*!#!mg;
+  $c =~ s!^\s+!!mg;
 
   open OUT, ">$0" or die "cannot strip $0: $!\n";
-  print OUT $self;
+  print OUT "$pl$c\n";
 
   exit 0;
 }
@@ -4897,7 +4897,7 @@ typedef NVTYPE NV;
 #  define XSprePUSH                      (sp = PL_stack_base + ax - 1)
 #endif
 
-#if ((PERL_VERSION < 5) || ((PERL_VERSION == 5) && (PERL_SUBVERSION < 0)))
+#if (PERL_BCDVERSION < 0x5005000)
 #  undef XSRETURN
 #  define XSRETURN(off)                                   \
       STMT_START {                                        \
@@ -4917,12 +4917,23 @@ typedef NVTYPE NV;
 #ifndef UTF8_MAXBYTES
 #  define UTF8_MAXBYTES                  UTF8_MAXLEN
 #endif
+#ifndef PERL_HASH
+#  define PERL_HASH(hash,str,len)        \
+     STMT_START	{ \
+	char *s_PeRlHaSh = str; \
+	I32 i_PeRlHaSh = len; \
+	U32 hash_PeRlHaSh = 0; \
+	while (i_PeRlHaSh--) \
+	    hash_PeRlHaSh = hash_PeRlHaSh * 33 + *s_PeRlHaSh++; \
+	(hash) = hash_PeRlHaSh; \
+    } STMT_END
+#endif
 
 #ifndef PERL_SIGNALS_UNSAFE_FLAG
 
 #define PERL_SIGNALS_UNSAFE_FLAG 0x0001
 
-#if ((PERL_VERSION < 8) || ((PERL_VERSION == 8) && (PERL_SUBVERSION < 0)))
+#if (PERL_BCDVERSION < 0x5008000)
 #  define D_PPP_PERL_SIGNALS_INIT   PERL_SIGNALS_UNSAFE_FLAG
 #else
 #  define D_PPP_PERL_SIGNALS_INIT   0
@@ -4946,14 +4957,14 @@ extern U32 DPPP_(my_PL_signals);
  * automatically be defined as the correct argument.
  */
 
-#if ((PERL_VERSION < 5) || ((PERL_VERSION == 5) && (PERL_SUBVERSION <= 4)))
+#if (PERL_BCDVERSION <= 0x5005004)
 /* Replace: 1 */
 #  define PL_ppaddr                 ppaddr
 #  define PL_no_modify              no_modify
 /* Replace: 0 */
 #endif
 
-#if ((PERL_VERSION < 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION <= 5)))
+#if (PERL_BCDVERSION <= 0x5004005)
 /* Replace: 1 */
 #  define PL_DBsignal               DBsignal
 #  define PL_DBsingle               DBsingle
@@ -4999,7 +5010,7 @@ extern U32 DPPP_(my_PL_signals);
  */
 
 /* TODO: cannot assign to these vars; is it worth fixing? */
-#if ((PERL_VERSION > 9) || ((PERL_VERSION == 9) && (PERL_SUBVERSION >= 5)))
+#if (PERL_BCDVERSION >= 0x5009005)
 #  define PL_expect         (PL_parser ? PL_parser->expect : 0)
 #  define PL_copline        (PL_parser ? PL_parser->copline : 0)
 #  define PL_rsfp           (PL_parser ? PL_parser->rsfp : (PerlIO *) 0)
@@ -5031,10 +5042,10 @@ extern U32 DPPP_(my_PL_signals);
 #  define aTHX_
 #endif
 
-#if ((PERL_VERSION < 6) || ((PERL_VERSION == 6) && (PERL_SUBVERSION < 0)))
+#if (PERL_BCDVERSION < 0x5006000)
 #  ifdef USE_THREADS
 #    define aTHXR  thr
-#    define aTHXR_ thr, 
+#    define aTHXR_ thr,
 #  else
 #    define aTHXR
 #    define aTHXR_
@@ -5217,7 +5228,7 @@ DPPP_(my_vload_module)(U32 flags, SV *name, SV *ver, va_list *args)
 	COP * const ocurcop = PL_curcop;
 	const int oexpect = PL_expect;
 
-#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0)))
+#if (PERL_BCDVERSION >= 0x5004000)
 	utilize(!(flags & PERL_LOADMOD_DENY), start_subparse(FALSE, 0),
 		veop, modname, imop);
 #else
@@ -5295,7 +5306,7 @@ DPPP_(my_newRV_noinc)(SV *sv)
  */
 
 /* newCONSTSUB from IO.xs is in the core starting with 5.004_63 */
-#if ((PERL_VERSION < 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION < 63))) && ((PERL_VERSION != 4) || (PERL_SUBVERSION != 5))
+#if (PERL_BCDVERSION < 0x5004063) && (PERL_BCDVERSION != 0x5004005)
 #if defined(NEED_newCONSTSUB)
 static void DPPP_(my_newCONSTSUB)(HV *stash, char *name, SV *sv);
 static
@@ -5326,9 +5337,9 @@ DPPP_(my_newCONSTSUB)(HV *stash, char *name, SV *sv)
 
 	newSUB(
 
-#if   ((PERL_VERSION < 3) || ((PERL_VERSION == 3) && (PERL_SUBVERSION < 22)))
+#if   (PERL_BCDVERSION < 0x5003022)
 		start_subparse(),
-#elif ((PERL_VERSION == 3) && (PERL_SUBVERSION == 22))
+#elif (PERL_BCDVERSION == 0x5003022)
      		start_subparse(0),
 #else  /* 5.003_23  onwards */
      		start_subparse(FALSE, 0),
@@ -5376,7 +5387,7 @@ DPPP_(my_newCONSTSUB)(HV *stash, char *name, SV *sv)
  * case below uses it to declare the data as static. */
 #define START_MY_CXT
 
-#if ((PERL_VERSION < 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION < 68)))
+#if (PERL_BCDVERSION < 0x5004068)
 /* Fetches the SV that keeps the per-interpreter data. */
 #define dMY_CXT_SV \
 	SV *my_cxt_sv = get_sv(MY_CXT_KEY, FALSE)
@@ -5576,7 +5587,7 @@ DPPP_(my_newCONSTSUB)(HV *stash, char *name, SV *sv)
  * borrowed from perl-5.7.3.
  */
 
-#if ((PERL_VERSION < 7) || ((PERL_VERSION == 7) && (PERL_SUBVERSION < 0)))
+#if (PERL_BCDVERSION < 0x5007000)
 
 #if defined(NEED_sv_2pvbyte)
 static char * DPPP_(my_sv_2pvbyte)(pTHX_ register SV *sv, STRLEN *lp);
@@ -5673,7 +5684,7 @@ DPPP_(my_sv_2pvbyte)(pTHX_ register SV *sv, STRLEN *lp)
 #  define SV_COW_SHARED_HASH_KEYS        0
 #endif
 
-#if ((PERL_VERSION < 7) || ((PERL_VERSION == 7) && (PERL_SUBVERSION < 2)))
+#if (PERL_BCDVERSION < 0x5007002)
 
 #if defined(NEED_sv_2pv_flags)
 static char * DPPP_(my_sv_2pv_flags)(pTHX_ SV * sv, STRLEN * lp, I32 flags);
@@ -5816,7 +5827,7 @@ DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags)
                 (((XPVMG*) SvANY(sv))->xmg_magic = (val)); } STMT_END
 #endif
 
-#if ((PERL_VERSION < 9) || ((PERL_VERSION == 9) && (PERL_SUBVERSION < 3)))
+#if (PERL_BCDVERSION < 0x5009003)
 #ifndef SvPVX_const
 #  define SvPVX_const(sv)                ((const char*) (0 + SvPVX(sv)))
 #endif
@@ -5851,7 +5862,7 @@ DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags)
                 (((XPVMG*) SvANY(sv))->xmg_stash = (val)); } STMT_END
 #endif
 
-#if ((PERL_VERSION < 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION < 0)))
+#if (PERL_BCDVERSION < 0x5004000)
 #ifndef SvUV_set
 #  define SvUV_set(sv, val)              \
                 STMT_START { assert(SvTYPE(sv) == SVt_IV || SvTYPE(sv) >= SVt_PVIV); \
@@ -5867,7 +5878,7 @@ DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags)
 
 #endif
 
-#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0))) && !defined(vnewSVpvf)
+#if (PERL_BCDVERSION >= 0x5004000) && !defined(vnewSVpvf)
 #if defined(NEED_vnewSVpvf)
 static SV * DPPP_(my_vnewSVpvf)(pTHX_ const char * pat, va_list * args);
 static
@@ -5894,15 +5905,15 @@ DPPP_(my_vnewSVpvf)(pTHX_ const char *pat, va_list *args)
 #endif
 #endif
 
-#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0))) && !defined(sv_vcatpvf)
+#if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_vcatpvf)
 #  define sv_vcatpvf(sv, pat, args)  sv_vcatpvfn(sv, pat, strlen(pat), args, Null(SV**), 0, Null(bool*))
 #endif
 
-#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0))) && !defined(sv_vsetpvf)
+#if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_vsetpvf)
 #  define sv_vsetpvf(sv, pat, args)  sv_vsetpvfn(sv, pat, strlen(pat), args, Null(SV**), 0, Null(bool*))
 #endif
 
-#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0))) && !defined(sv_catpvf_mg)
+#if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_catpvf_mg)
 #if defined(NEED_sv_catpvf_mg)
 static void DPPP_(my_sv_catpvf_mg)(pTHX_ SV * sv, const char * pat, ...);
 static
@@ -5928,7 +5939,7 @@ DPPP_(my_sv_catpvf_mg)(pTHX_ SV *sv, const char *pat, ...)
 #endif
 
 #ifdef PERL_IMPLICIT_CONTEXT
-#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0))) && !defined(sv_catpvf_mg_nocontext)
+#if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_catpvf_mg_nocontext)
 #if defined(NEED_sv_catpvf_mg_nocontext)
 static void DPPP_(my_sv_catpvf_mg_nocontext)(SV * sv, const char * pat, ...);
 static
@@ -5965,7 +5976,7 @@ DPPP_(my_sv_catpvf_mg_nocontext)(SV *sv, const char *pat, ...)
 #  endif
 #endif
 
-#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0))) && !defined(sv_vcatpvf_mg)
+#if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_vcatpvf_mg)
 #  define sv_vcatpvf_mg(sv, pat, args)                                     \
    STMT_START {                                                            \
      sv_vcatpvfn(sv, pat, strlen(pat), args, Null(SV**), 0, Null(bool*));  \
@@ -5973,7 +5984,7 @@ DPPP_(my_sv_catpvf_mg_nocontext)(SV *sv, const char *pat, ...)
    } STMT_END
 #endif
 
-#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0))) && !defined(sv_setpvf_mg)
+#if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_setpvf_mg)
 #if defined(NEED_sv_setpvf_mg)
 static void DPPP_(my_sv_setpvf_mg)(pTHX_ SV * sv, const char * pat, ...);
 static
@@ -5999,7 +6010,7 @@ DPPP_(my_sv_setpvf_mg)(pTHX_ SV *sv, const char *pat, ...)
 #endif
 
 #ifdef PERL_IMPLICIT_CONTEXT
-#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0))) && !defined(sv_setpvf_mg_nocontext)
+#if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_setpvf_mg_nocontext)
 #if defined(NEED_sv_setpvf_mg_nocontext)
 static void DPPP_(my_sv_setpvf_mg_nocontext)(SV * sv, const char * pat, ...);
 static
@@ -6036,12 +6047,52 @@ DPPP_(my_sv_setpvf_mg_nocontext)(SV *sv, const char *pat, ...)
 #  endif
 #endif
 
-#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0))) && !defined(sv_vsetpvf_mg)
+#if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_vsetpvf_mg)
 #  define sv_vsetpvf_mg(sv, pat, args)                                     \
    STMT_START {                                                            \
      sv_vsetpvfn(sv, pat, strlen(pat), args, Null(SV**), 0, Null(bool*));  \
      SvSETMAGIC(sv);                                                       \
    } STMT_END
+#endif
+
+#ifndef newSVpvn_share
+
+#if defined(NEED_newSVpvn_share)
+static SV * DPPP_(my_newSVpvn_share)(pTHX_ const char *src, I32 len, U32 hash);
+static
+#else
+extern SV * DPPP_(my_newSVpvn_share)(pTHX_ const char *src, I32 len, U32 hash);
+#endif
+
+#ifdef newSVpvn_share
+#  undef newSVpvn_share
+#endif
+#define newSVpvn_share(a,b,c) DPPP_(my_newSVpvn_share)(aTHX_ a,b,c)
+#define Perl_newSVpvn_share DPPP_(my_newSVpvn_share)
+
+#if defined(NEED_newSVpvn_share) || defined(NEED_newSVpvn_share_GLOBAL)
+
+SV *
+DPPP_(my_newSVpvn_share)(pTHX_ const char *src, I32 len, U32 hash)
+{
+  SV *sv;
+  if (len < 0)
+    len = -len;
+  if (!hash)
+    PERL_HASH(hash, src, len);
+  sv = newSVpvn((char *) src, len);
+  sv_upgrade(sv, SVt_PVIV);
+  SvIVX(sv) = hash;
+  SvREADONLY_on(sv);
+  SvPOK_on(sv);
+  return sv;
+}
+
+#endif
+
+#endif
+#ifndef SvSHARED_HASH
+#  define SvSHARED_HASH(sv)              (0 + SvUVX(sv))
 #endif
 #ifndef WARN_ALL
 #  define WARN_ALL                       0
@@ -6242,7 +6293,7 @@ DPPP_(my_sv_setpvf_mg_nocontext)(SV *sv, const char *pat, ...)
 #  endif
 #endif
 
-#if ((PERL_VERSION > 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION >= 0))) && !defined(warner)
+#if (PERL_BCDVERSION >= 0x5004000) && !defined(warner)
 #if defined(NEED_warner)
 static void DPPP_(my_warner)(U32 err, const char *pat, ...);
 static
@@ -6589,11 +6640,11 @@ DPPP_(my_warner)(U32 err, const char *pat, ...)
  * earlier versions, the code will not compile.
  */
 
-#if ((PERL_VERSION < 4) || ((PERL_VERSION == 4) && (PERL_SUBVERSION < 0)))
+#if (PERL_BCDVERSION < 0x5004000)
 
   /* code that uses sv_magic_portable will not compile */
 
-#elif ((PERL_VERSION < 8) || ((PERL_VERSION == 8) && (PERL_SUBVERSION < 0)))
+#elif (PERL_BCDVERSION < 0x5008000)
 
 #  define sv_magic_portable(sv, obj, how, name, namlen)         \
    STMT_START {                                                 \
