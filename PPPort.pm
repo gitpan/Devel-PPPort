@@ -12,9 +12,9 @@
 #
 ################################################################################
 #
-#  $Revision: 55 $
+#  $Revision: 57 $
 #  $Author: mhx $
-#  $Date: 2007/08/19 19:41:37 +0200 $
+#  $Date: 2007/09/11 23:28:24 +0200 $
 #
 ################################################################################
 #
@@ -49,7 +49,7 @@ C<Devel::PPPort> contains a single function, called C<WriteFile>. Its
 only purpose is to write the F<ppport.h> C header file. This file
 contains a series of macros and, if explicitly requested, functions that
 allow XS modules to be built using older versions of Perl. Currently,
-Perl versions from 5.003 to 5.9.5 are supported.
+Perl versions from 5.003 to 5.10.0 are supported.
 
 This module is used by C<h2xs> to write the file F<ppport.h>.
 
@@ -103,7 +103,7 @@ Otherwise it returns a false value.
 
 =head1 COMPATIBILITY
 
-F<ppport.h> supports Perl versions from 5.003 to 5.9.5
+F<ppport.h> supports Perl versions from 5.003 to 5.10.0
 in threaded and non-threaded configurations.
 
 =head2 Provided Perl compatibility API
@@ -1092,7 +1092,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.11_05 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.11_06 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1179,7 +1179,7 @@ SKIP
 |>=head1 COMPATIBILITY
 |>
 |>This version of F<ppport.h> is designed to support operation with Perl
-|>installations back to 5.003, and has been tested up to 5.9.5.
+|>installations back to 5.003, and has been tested up to 5.10.0.
 |>
 |>=head1 OPTIONS
 |>
@@ -1827,8 +1827,6 @@ PerlIO_tell||5.007003|
 PerlIO_unread||5.007003|
 PerlIO_write||5.007003|
 Perl_signbit||5.009005|n
-Perl_warner_nocontext|5.006000||p
-Perl_warner|5.006000||p
 PoisonFree|5.009004||p
 PoisonNew|5.009004||p
 PoisonWith|5.009004||p
@@ -3768,11 +3766,13 @@ for $filename (@files) {
 
   for $func (sort keys %{$file{uses_Perl}}) {
     if ($API{$func}{varargs}) {
-      my $changes = ($c =~ s{\b(Perl_$func\s*\(\s*)(?!aTHX_?)(\)|[^\s)]*\))}
-                            { $1 . ($2 eq ')' ? 'aTHX' : 'aTHX_ ') . $2 }ge);
-      if ($changes) {
-        warning("Doesn't pass interpreter argument aTHX to Perl_$func");
-        $file{changes} += $changes;
+      unless ($API{$func}{nothxarg}) {
+        my $changes = ($c =~ s{\b(Perl_$func\s*\(\s*)(?!aTHX_?)(\)|[^\s)]*\))}
+                              { $1 . ($2 eq ')' ? 'aTHX' : 'aTHX_ ') . $2 }ge);
+        if ($changes) {
+          warning("Doesn't pass interpreter argument aTHX to Perl_$func");
+          $file{changes} += $changes;
+        }
       }
     }
     else {
@@ -5308,10 +5308,10 @@ DPPP_(my_newRV_noinc)(SV *sv)
 /* newCONSTSUB from IO.xs is in the core starting with 5.004_63 */
 #if (PERL_BCDVERSION < 0x5004063) && (PERL_BCDVERSION != 0x5004005)
 #if defined(NEED_newCONSTSUB)
-static void DPPP_(my_newCONSTSUB)(HV *stash, char *name, SV *sv);
+static void DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv);
 static
 #else
-extern void DPPP_(my_newCONSTSUB)(HV *stash, char *name, SV *sv);
+extern void DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv);
 #endif
 
 #ifdef newCONSTSUB
@@ -5323,7 +5323,7 @@ extern void DPPP_(my_newCONSTSUB)(HV *stash, char *name, SV *sv);
 #if defined(NEED_newCONSTSUB) || defined(NEED_newCONSTSUB_GLOBAL)
 
 void
-DPPP_(my_newCONSTSUB)(HV *stash, char *name, SV *sv)
+DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv)
 {
 	U32 oldhints = PL_hints;
 	HV *old_cop_stash = PL_curcop->cop_stash;
@@ -5345,7 +5345,7 @@ DPPP_(my_newCONSTSUB)(HV *stash, char *name, SV *sv)
      		start_subparse(FALSE, 0),
 #endif
 
-		newSVOP(OP_CONST, 0, newSVpv(name,0)),
+		newSVOP(OP_CONST, 0, newSVpv((char *) name, 0)),
 		newSVOP(OP_CONST, 0, &PL_sv_no),   /* SvPV(&PL_sv_no) == "" -- GMB */
 		newSTATEOP(0, Nullch, newSVOP(OP_CONST, 0, sv))
 	);
@@ -5590,10 +5590,10 @@ DPPP_(my_newCONSTSUB)(HV *stash, char *name, SV *sv)
 #if (PERL_BCDVERSION < 0x5007000)
 
 #if defined(NEED_sv_2pvbyte)
-static char * DPPP_(my_sv_2pvbyte)(pTHX_ register SV *sv, STRLEN *lp);
+static char * DPPP_(my_sv_2pvbyte)(pTHX_ SV * sv, STRLEN * lp);
 static
 #else
-extern char * DPPP_(my_sv_2pvbyte)(pTHX_ register SV *sv, STRLEN *lp);
+extern char * DPPP_(my_sv_2pvbyte)(pTHX_ SV * sv, STRLEN * lp);
 #endif
 
 #ifdef sv_2pvbyte
@@ -5605,7 +5605,7 @@ extern char * DPPP_(my_sv_2pvbyte)(pTHX_ register SV *sv, STRLEN *lp);
 #if defined(NEED_sv_2pvbyte) || defined(NEED_sv_2pvbyte_GLOBAL)
 
 char *
-DPPP_(my_sv_2pvbyte)(pTHX_ register SV *sv, STRLEN *lp)
+DPPP_(my_sv_2pvbyte)(pTHX_ SV *sv, STRLEN *lp)
 {
   sv_utf8_downgrade(sv,0);
   return SvPV(sv,*lp);
@@ -6079,7 +6079,7 @@ DPPP_(my_newSVpvn_share)(pTHX_ const char *src, I32 len, U32 hash)
   if (len < 0)
     len = -len;
   if (!hash)
-    PERL_HASH(hash, src, len);
+    PERL_HASH(hash, (char*) src, len);
   sv = newSVpvn((char *) src, len);
   sv_upgrade(sv, SVt_PVIV);
   SvIVX(sv) = hash;
@@ -7089,10 +7089,10 @@ DPPP_(my_grok_number)(pTHX_ const char *pv, STRLEN len, UV *valuep)
 
 #ifndef grok_bin
 #if defined(NEED_grok_bin)
-static UV DPPP_(my_grok_bin)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result);
+static UV DPPP_(my_grok_bin)(pTHX_ const char * start, STRLEN * len_p, I32 * flags, NV * result);
 static
 #else
-extern UV DPPP_(my_grok_bin)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result);
+extern UV DPPP_(my_grok_bin)(pTHX_ const char * start, STRLEN * len_p, I32 * flags, NV * result);
 #endif
 
 #ifdef grok_bin
@@ -7103,7 +7103,7 @@ extern UV DPPP_(my_grok_bin)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *r
 
 #if defined(NEED_grok_bin) || defined(NEED_grok_bin_GLOBAL)
 UV
-DPPP_(my_grok_bin)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result)
+DPPP_(my_grok_bin)(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
 {
     const char *s = start;
     STRLEN len = *len_p;
@@ -7191,10 +7191,10 @@ DPPP_(my_grok_bin)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result)
 
 #ifndef grok_hex
 #if defined(NEED_grok_hex)
-static UV DPPP_(my_grok_hex)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result);
+static UV DPPP_(my_grok_hex)(pTHX_ const char * start, STRLEN * len_p, I32 * flags, NV * result);
 static
 #else
-extern UV DPPP_(my_grok_hex)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result);
+extern UV DPPP_(my_grok_hex)(pTHX_ const char * start, STRLEN * len_p, I32 * flags, NV * result);
 #endif
 
 #ifdef grok_hex
@@ -7205,7 +7205,7 @@ extern UV DPPP_(my_grok_hex)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *r
 
 #if defined(NEED_grok_hex) || defined(NEED_grok_hex_GLOBAL)
 UV
-DPPP_(my_grok_hex)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result)
+DPPP_(my_grok_hex)(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
 {
     const char *s = start;
     STRLEN len = *len_p;
@@ -7293,10 +7293,10 @@ DPPP_(my_grok_hex)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result)
 
 #ifndef grok_oct
 #if defined(NEED_grok_oct)
-static UV DPPP_(my_grok_oct)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result);
+static UV DPPP_(my_grok_oct)(pTHX_ const char * start, STRLEN * len_p, I32 * flags, NV * result);
 static
 #else
-extern UV DPPP_(my_grok_oct)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result);
+extern UV DPPP_(my_grok_oct)(pTHX_ const char * start, STRLEN * len_p, I32 * flags, NV * result);
 #endif
 
 #ifdef grok_oct
@@ -7307,7 +7307,7 @@ extern UV DPPP_(my_grok_oct)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *r
 
 #if defined(NEED_grok_oct) || defined(NEED_grok_oct_GLOBAL)
 UV
-DPPP_(my_grok_oct)(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result)
+DPPP_(my_grok_oct)(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
 {
     const char *s = start;
     STRLEN len = *len_p;

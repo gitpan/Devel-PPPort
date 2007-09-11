@@ -1,9 +1,9 @@
 --- #YAML:1.0
 name:                Devel-PPPort
-version:             3.11_05
+version:             3.11_06
 abstract:            Perl/Pollution/Portability
 license:             perl
-generated_by:        ExtUtils::MakeMaker version 6.36
+generated_by:        ExtUtils::MakeMaker version 6.36_01
 distribution_type:   module
 requires:     
 meta-spec:
