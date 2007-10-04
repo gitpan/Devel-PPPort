@@ -1092,7 +1092,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.12 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.13 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -4957,7 +4957,7 @@ extern U32 DPPP_(my_PL_signals);
  * automatically be defined as the correct argument.
  */
 
-#if (PERL_BCDVERSION <= 0x5005004)
+#if (PERL_BCDVERSION <= 0x5005005)
 /* Replace: 1 */
 #  define PL_ppaddr                 ppaddr
 #  define PL_no_modify              no_modify
