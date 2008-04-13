@@ -1112,7 +1112,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.13_01 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.13_02 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -5512,7 +5512,8 @@ DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv)
 
 #ifndef NVef
 #  if defined(USE_LONG_DOUBLE) && defined(HAS_LONG_DOUBLE) && \
-      defined(PERL_PRIfldbl) /* Not very likely, but let's try anyway. */
+      defined(PERL_PRIfldbl) && (PERL_BCDVERSION != 0x5006000)
+            /* Not very likely, but let's try anyway. */
 #    define NVef          PERL_PRIeldbl
 #    define NVff          PERL_PRIfldbl
 #    define NVgf          PERL_PRIgldbl
