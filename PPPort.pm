@@ -1112,7 +1112,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.13_02 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.13_03 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -5806,6 +5806,12 @@ DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags)
 #endif
 
 #endif
+
+#if (PERL_BCDVERSION < 0x5008008) || ( (PERL_BCDVERSION >= 0x5009000) && (PERL_BCDVERSION < 0x5009003) )
+# define DPPP_SVPV_NOLEN_LP_ARG &PL_na
+#else
+# define DPPP_SVPV_NOLEN_LP_ARG 0
+#endif
 #ifndef SvPV_const
 #  define SvPV_const(sv, lp)             SvPV_flags_const(sv, lp, SV_GMAGIC)
 #endif
@@ -5828,7 +5834,7 @@ DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags)
 #  define SvPV_flags_const_nolen(sv, flags) \
                  ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
                   ? SvPVX_const(sv) : \
-                  (const char*) sv_2pv_flags(sv, 0, flags|SV_CONST_RETURN))
+                  (const char*) sv_2pv_flags(sv, DPPP_SVPV_NOLEN_LP_ARG, flags|SV_CONST_RETURN))
 #endif
 #ifndef SvPV_flags_mutable
 #  define SvPV_flags_mutable(sv, lp, flags) \
@@ -5863,7 +5869,7 @@ DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags)
 #ifndef SvPV_force_flags_nolen
 #  define SvPV_force_flags_nolen(sv, flags) \
                  ((SvFLAGS(sv) & (SVf_POK|SVf_THINKFIRST)) == SVf_POK \
-                 ? SvPVX(sv) : sv_pvn_force_flags(sv, 0, flags))
+                 ? SvPVX(sv) : sv_pvn_force_flags(sv, DPPP_SVPV_NOLEN_LP_ARG, flags))
 #endif
 #ifndef SvPV_force_flags_mutable
 #  define SvPV_force_flags_mutable(sv, lp, flags) \
@@ -5874,12 +5880,12 @@ DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags)
 #ifndef SvPV_nolen
 #  define SvPV_nolen(sv)                 \
                  ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
-                  ? SvPVX(sv) : sv_2pv_flags(sv, 0, SV_GMAGIC))
+                  ? SvPVX(sv) : sv_2pv_flags(sv, DPPP_SVPV_NOLEN_LP_ARG, SV_GMAGIC))
 #endif
 #ifndef SvPV_nolen_const
 #  define SvPV_nolen_const(sv)           \
                  ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
-                  ? SvPVX_const(sv) : sv_2pv_flags(sv, 0, SV_GMAGIC|SV_CONST_RETURN))
+                  ? SvPVX_const(sv) : sv_2pv_flags(sv, DPPP_SVPV_NOLEN_LP_ARG, SV_GMAGIC|SV_CONST_RETURN))
 #endif
 #ifndef SvPV_nomg
 #  define SvPV_nomg(sv, lp)              SvPV_flags(sv, lp, 0)
