@@ -303,6 +303,8 @@ in older Perl releases:
     PERL_VERSION
     Perl_warner
     Perl_warner_nocontext
+    PERLIO_FUNCS_CAST
+    PERLIO_FUNCS_DECL
     PL_compiling
     PL_copline
     PL_curcop
@@ -537,12 +539,18 @@ Perl below which it is unsupported:
   MULTICALL
   POP_MULTICALL
   PUSH_MULTICALL
+  SvOOK_offset
   av_iter_p
+  croak_xs_usage
+  fetch_cop_label
+  gv_fetchmethod_flags
   hv_assert
   pad_sv
   pregfree2
   ref
+  save_padsv_and_mortalize
   stashpv_hvname_match
+  sv_insert_flags
 
 =item perl 5.10.0
 
@@ -581,7 +589,6 @@ Perl below which it is unsupported:
   reg_named_buff_firstkey
   reg_named_buff_nextkey
   reg_named_buff_scalar
-  reg_stringify
   regfree_internal
   savesharedpvn
   scan_vstring
@@ -775,7 +782,6 @@ Perl below which it is unsupported:
   is_lvalue_sub
   my_popen_list
   save_mortalizesv
-  save_padsv
   scan_num
   sv_force_normal_flags
   sv_setref_uv
@@ -1112,7 +1118,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.14 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.14_01 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1680,6 +1686,7 @@ PAD_COMPNAME_GEN|||
 PAD_COMPNAME_OURSTASH|||
 PAD_COMPNAME_PV|||
 PAD_COMPNAME_TYPE|||
+PAD_DUP|||
 PAD_RESTORE_LOCAL|||
 PAD_SAVE_LOCAL|||
 PAD_SAVE_SETNULLPAD|||
@@ -1688,6 +1695,8 @@ PAD_SET_CUR_NOSAVE|||
 PAD_SET_CUR|||
 PAD_SVl|||
 PAD_SV|||
+PERLIO_FUNCS_CAST|5.009003||p
+PERLIO_FUNCS_DECL|5.009003||p
 PERL_ABS|5.008001||p
 PERL_BCDVERSION|5.011000||p
 PERL_GCC_BRACE_GROUPS_FORBIDDEN|5.008001||p
@@ -1931,6 +1940,7 @@ SvNV_set|||
 SvNVx|||
 SvNV|||
 SvOK|||
+SvOOK_offset||5.011000|
 SvOOK|||
 SvPOK_off|||
 SvPOK_only_UTF8||5.006000|
@@ -2203,7 +2213,6 @@ ck_glob|||
 ck_grep|||
 ck_index|||
 ck_join|||
-ck_lengthconst|||
 ck_lfun|||
 ck_listiob|||
 ck_match|||
@@ -2213,7 +2222,6 @@ ck_open|||
 ck_readline|||
 ck_repeat|||
 ck_require|||
-ck_retarget|||
 ck_return|||
 ck_rfun|||
 ck_rvconst|||
@@ -2243,6 +2251,7 @@ cop_free|||
 cr_textfilter|||
 create_eval_scope|||
 croak_nocontext|||vn
+croak_xs_usage||5.011000|
 croak|||v
 csighandler||5.009003|n
 curmad|||
@@ -2397,6 +2406,7 @@ fbm_compile||5.005000|
 fbm_instr||5.005000|
 fd_on_nosuid_fs|||
 feature_is_enabled|||
+fetch_cop_label||5.011000|
 filter_add|||
 filter_del|||
 filter_gets|||
@@ -2479,6 +2489,7 @@ gv_fetchfile_flags||5.009005|
 gv_fetchfile|||
 gv_fetchmeth_autoload||5.007003|
 gv_fetchmethod_autoload||5.004000|
+gv_fetchmethod_flags||5.011000|
 gv_fetchmethod|||
 gv_fetchmeth|||
 gv_fetchpvn_flags||5.009002|
@@ -2666,6 +2677,7 @@ madparse|||
 magic_clear_all_env|||
 magic_clearenv|||
 magic_clearhint|||
+magic_clearisa|||
 magic_clearpack|||
 magic_clearsig|||
 magic_dump||5.006000|
@@ -2719,6 +2731,7 @@ magicname|||
 make_matcher|||
 make_trie_failtable|||
 make_trie|||
+malloc_good_size|||n
 malloced_size|||n
 malloc||5.007002|n
 markstack_grow|||
@@ -3023,6 +3036,7 @@ ref_array_or_hash|||
 refcounted_he_chain_2hv|||
 refcounted_he_fetch|||
 refcounted_he_free|||
+refcounted_he_new_common|||
 refcounted_he_new|||
 refcounted_he_value|||
 refkids|||
@@ -3046,7 +3060,6 @@ reg_qr_package|||
 reg_recode|||
 reg_scan_name|||
 reg_skipcomment|||
-reg_stringify||5.009005|
 reg_temp_copy|||
 reganode|||
 regatom|||
@@ -3135,7 +3148,7 @@ save_magic|||
 save_mortalizesv||5.007001|
 save_nogv|||
 save_op|||
-save_padsv||5.007001|
+save_padsv_and_mortalize||5.011000|
 save_pptr|||
 save_re_context||5.006000|
 save_scalar_at|||
@@ -3212,6 +3225,7 @@ start_glob|||
 start_subparse||5.004000|
 stashpv_hvname_match||5.011000|
 stdize_locale|||
+store_cop_label|||
 strEQ|||
 strGE|||
 strGT|||
@@ -3295,6 +3309,7 @@ sv_gets||5.004000|
 sv_grow|||
 sv_i_ncmp|||
 sv_inc|||
+sv_insert_flags||5.011000|
 sv_insert|||
 sv_isa|||
 sv_isobject|||
@@ -4951,6 +4966,16 @@ typedef NVTYPE NV;
     } STMT_END
 #endif
 
+#ifndef PERLIO_FUNCS_DECL
+# ifdef PERLIO_FUNCS_CONST
+#  define PERLIO_FUNCS_DECL(funcs) const PerlIO_funcs funcs
+#  define PERLIO_FUNCS_CAST(funcs) (PerlIO_funcs*)(funcs)
+# else
+#  define PERLIO_FUNCS_DECL(funcs) PerlIO_funcs funcs
+#  define PERLIO_FUNCS_CAST(funcs) (funcs)
+# endif
+#endif
+
 #ifndef PERL_SIGNALS_UNSAFE_FLAG
 
 #define PERL_SIGNALS_UNSAFE_FLAG 0x0001
@@ -5610,10 +5635,10 @@ DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv)
 #ifndef newSVpvn_flags
 
 #if defined(NEED_newSVpvn_flags)
-static SV * DPPP_(my_newSVpvn_flags)(pTHX_ const char * s, STRLEN len, U32 flags);
+static SV * DPPP_(my_newSVpvn_flags)(pTHX_ const char *s, STRLEN len, U32 flags);
 static
 #else
-extern SV * DPPP_(my_newSVpvn_flags)(pTHX_ const char * s, STRLEN len, U32 flags);
+extern SV * DPPP_(my_newSVpvn_flags)(pTHX_ const char *s, STRLEN len, U32 flags);
 #endif
 
 #ifdef newSVpvn_flags
@@ -5661,10 +5686,10 @@ DPPP_(my_newSVpvn_flags)(pTHX_ const char *s, STRLEN len, U32 flags)
 #if (PERL_BCDVERSION < 0x5007000)
 
 #if defined(NEED_sv_2pvbyte)
-static char * DPPP_(my_sv_2pvbyte)(pTHX_ SV * sv, STRLEN * lp);
+static char * DPPP_(my_sv_2pvbyte)(pTHX_ SV *sv, STRLEN *lp);
 static
 #else
-extern char * DPPP_(my_sv_2pvbyte)(pTHX_ SV * sv, STRLEN * lp);
+extern char * DPPP_(my_sv_2pvbyte)(pTHX_ SV *sv, STRLEN *lp);
 #endif
 
 #ifdef sv_2pvbyte
@@ -5758,10 +5783,10 @@ DPPP_(my_sv_2pvbyte)(pTHX_ SV *sv, STRLEN *lp)
 #if (PERL_BCDVERSION < 0x5007002)
 
 #if defined(NEED_sv_2pv_flags)
-static char * DPPP_(my_sv_2pv_flags)(pTHX_ SV * sv, STRLEN * lp, I32 flags);
+static char * DPPP_(my_sv_2pv_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags);
 static
 #else
-extern char * DPPP_(my_sv_2pv_flags)(pTHX_ SV * sv, STRLEN * lp, I32 flags);
+extern char * DPPP_(my_sv_2pv_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags);
 #endif
 
 #ifdef sv_2pv_flags
@@ -5782,10 +5807,10 @@ DPPP_(my_sv_2pv_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags)
 #endif
 
 #if defined(NEED_sv_pvn_force_flags)
-static char * DPPP_(my_sv_pvn_force_flags)(pTHX_ SV * sv, STRLEN * lp, I32 flags);
+static char * DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags);
 static
 #else
-extern char * DPPP_(my_sv_pvn_force_flags)(pTHX_ SV * sv, STRLEN * lp, I32 flags);
+extern char * DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags);
 #endif
 
 #ifdef sv_pvn_force_flags
@@ -5957,10 +5982,10 @@ DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags)
 
 #if (PERL_BCDVERSION >= 0x5004000) && !defined(vnewSVpvf)
 #if defined(NEED_vnewSVpvf)
-static SV * DPPP_(my_vnewSVpvf)(pTHX_ const char * pat, va_list * args);
+static SV * DPPP_(my_vnewSVpvf)(pTHX_ const char *pat, va_list *args);
 static
 #else
-extern SV * DPPP_(my_vnewSVpvf)(pTHX_ const char * pat, va_list * args);
+extern SV * DPPP_(my_vnewSVpvf)(pTHX_ const char *pat, va_list *args);
 #endif
 
 #ifdef vnewSVpvf
@@ -5992,10 +6017,10 @@ DPPP_(my_vnewSVpvf)(pTHX_ const char *pat, va_list *args)
 
 #if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_catpvf_mg)
 #if defined(NEED_sv_catpvf_mg)
-static void DPPP_(my_sv_catpvf_mg)(pTHX_ SV * sv, const char * pat, ...);
+static void DPPP_(my_sv_catpvf_mg)(pTHX_ SV *sv, const char *pat, ...);
 static
 #else
-extern void DPPP_(my_sv_catpvf_mg)(pTHX_ SV * sv, const char * pat, ...);
+extern void DPPP_(my_sv_catpvf_mg)(pTHX_ SV *sv, const char *pat, ...);
 #endif
 
 #define Perl_sv_catpvf_mg DPPP_(my_sv_catpvf_mg)
@@ -6018,10 +6043,10 @@ DPPP_(my_sv_catpvf_mg)(pTHX_ SV *sv, const char *pat, ...)
 #ifdef PERL_IMPLICIT_CONTEXT
 #if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_catpvf_mg_nocontext)
 #if defined(NEED_sv_catpvf_mg_nocontext)
-static void DPPP_(my_sv_catpvf_mg_nocontext)(SV * sv, const char * pat, ...);
+static void DPPP_(my_sv_catpvf_mg_nocontext)(SV *sv, const char *pat, ...);
 static
 #else
-extern void DPPP_(my_sv_catpvf_mg_nocontext)(SV * sv, const char * pat, ...);
+extern void DPPP_(my_sv_catpvf_mg_nocontext)(SV *sv, const char *pat, ...);
 #endif
 
 #define sv_catpvf_mg_nocontext DPPP_(my_sv_catpvf_mg_nocontext)
@@ -6063,10 +6088,10 @@ DPPP_(my_sv_catpvf_mg_nocontext)(SV *sv, const char *pat, ...)
 
 #if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_setpvf_mg)
 #if defined(NEED_sv_setpvf_mg)
-static void DPPP_(my_sv_setpvf_mg)(pTHX_ SV * sv, const char * pat, ...);
+static void DPPP_(my_sv_setpvf_mg)(pTHX_ SV *sv, const char *pat, ...);
 static
 #else
-extern void DPPP_(my_sv_setpvf_mg)(pTHX_ SV * sv, const char * pat, ...);
+extern void DPPP_(my_sv_setpvf_mg)(pTHX_ SV *sv, const char *pat, ...);
 #endif
 
 #define Perl_sv_setpvf_mg DPPP_(my_sv_setpvf_mg)
@@ -6089,10 +6114,10 @@ DPPP_(my_sv_setpvf_mg)(pTHX_ SV *sv, const char *pat, ...)
 #ifdef PERL_IMPLICIT_CONTEXT
 #if (PERL_BCDVERSION >= 0x5004000) && !defined(sv_setpvf_mg_nocontext)
 #if defined(NEED_sv_setpvf_mg_nocontext)
-static void DPPP_(my_sv_setpvf_mg_nocontext)(SV * sv, const char * pat, ...);
+static void DPPP_(my_sv_setpvf_mg_nocontext)(SV *sv, const char *pat, ...);
 static
 #else
-extern void DPPP_(my_sv_setpvf_mg_nocontext)(SV * sv, const char * pat, ...);
+extern void DPPP_(my_sv_setpvf_mg_nocontext)(SV *sv, const char *pat, ...);
 #endif
 
 #define sv_setpvf_mg_nocontext DPPP_(my_sv_setpvf_mg_nocontext)
