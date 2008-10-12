@@ -12,9 +12,9 @@
 #
 ################################################################################
 #
-#  $Revision: 59 $
+#  $Revision: 61 $
 #  $Author: mhx $
-#  $Date: 2008/01/04 10:47:38 +0100 $
+#  $Date: 2008/10/12 13:54:21 +0200 $
 #
 ################################################################################
 #
@@ -205,6 +205,7 @@ in older Perl releases:
     MY_CXT_CLONE
     MY_CXT_INIT
     my_snprintf
+    my_sprintf
     my_strlcat
     my_strlcpy
     newCONSTSUB
@@ -305,6 +306,8 @@ in older Perl releases:
     Perl_warner_nocontext
     PERLIO_FUNCS_CAST
     PERLIO_FUNCS_DECL
+    PL_bufend
+    PL_bufptr
     PL_compiling
     PL_copline
     PL_curcop
@@ -323,8 +326,12 @@ in older Perl releases:
     PL_hexdigit
     PL_hints
     PL_laststatval
+    PL_lex_state
+    PL_lex_stuff
+    PL_linestr
     PL_na
     PL_no_modify
+    PL_parser
     PL_perl_destruct_level
     PL_perldb
     PL_ppaddr
@@ -342,6 +349,7 @@ in older Perl releases:
     PL_sv_yes
     PL_tainted
     PL_tainting
+    PL_tokenbuf
     pMY_CXT
     pMY_CXT_
     Poison
@@ -430,6 +438,7 @@ in older Perl releases:
     SvPV_nomg
     SvPV_nomg_const
     SvPV_nomg_const_nolen
+    SvPV_renew
     SvPVbyte
     SvPVX_const
     SvPVX_mutable
@@ -625,7 +634,6 @@ Perl below which it is unsupported:
   hv_riter_p
   hv_riter_set
   is_utf8_string_loclen
-  my_sprintf
   newGIVENOP
   newSVhek
   newSVpvs_share
@@ -1118,7 +1126,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.14_01 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.14_02 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1366,6 +1374,7 @@ SKIP
 |>
 |>    Function / Variable       Static Request               Global Request
 |>    -----------------------------------------------------------------------------------------
+|>    PL_parser                 NEED_PL_parser               NEED_PL_parser_GLOBAL
 |>    PL_signals                NEED_PL_signals              NEED_PL_signals_GLOBAL
 |>    eval_pv()                 NEED_eval_pv                 NEED_eval_pv_GLOBAL
 |>    grok_bin()                NEED_grok_bin                NEED_grok_bin_GLOBAL
@@ -1375,6 +1384,7 @@ SKIP
 |>    grok_oct()                NEED_grok_oct                NEED_grok_oct_GLOBAL
 |>    load_module()             NEED_load_module             NEED_load_module_GLOBAL
 |>    my_snprintf()             NEED_my_snprintf             NEED_my_snprintf_GLOBAL
+|>    my_sprintf()              NEED_my_sprintf              NEED_my_sprintf_GLOBAL
 |>    my_strlcat()              NEED_my_strlcat              NEED_my_strlcat_GLOBAL
 |>    my_strlcpy()              NEED_my_strlcpy              NEED_my_strlcpy_GLOBAL
 |>    newCONSTSUB()             NEED_newCONSTSUB             NEED_newCONSTSUB_GLOBAL
@@ -1776,6 +1786,8 @@ PL_DBsingle|||pn
 PL_DBsub|||pn
 PL_DBtrace|||pn
 PL_Sv|5.005000||p
+PL_bufend|||p
+PL_bufptr|||p
 PL_compiling|5.004050||p
 PL_copline|5.011000||p
 PL_curcop|5.004050||p
@@ -1791,10 +1803,14 @@ PL_hexdigit|5.005000||p
 PL_hints|5.005000||p
 PL_last_in_gv|||n
 PL_laststatval|5.005000||p
+PL_lex_state|||p
+PL_lex_stuff|||p
+PL_linestr|||p
 PL_modglobal||5.005000|n
 PL_na|5.004050||pn
 PL_no_modify|5.006000||p
 PL_ofs_sv|||n
+PL_parser|||p
 PL_perl_destruct_level|5.004050||p
 PL_perldb|5.004050||p
 PL_ppaddr|5.006000||p
@@ -1812,6 +1828,7 @@ PL_sv_undef|5.004050||pn
 PL_sv_yes|5.004050||pn
 PL_tainted|5.004050||p
 PL_tainting|5.004050||p
+PL_tokenbuf|||p
 POP_MULTICALL||5.011000|
 POPi|||n
 POPl|||n
@@ -1970,6 +1987,7 @@ SvPV_nolen|5.006000||p
 SvPV_nomg_const_nolen|5.009003||p
 SvPV_nomg_const|5.009003||p
 SvPV_nomg|5.007002||p
+SvPV_renew|||p
 SvPV_set|||
 SvPVbyte_force||5.009002|
 SvPVbyte_nolen||5.006000|
@@ -2824,7 +2842,7 @@ my_popen||5.004000|
 my_setenv|||
 my_snprintf|5.009004||pvn
 my_socketpair||5.007003|n
-my_sprintf||5.009003|vn
+my_sprintf|5.009003||pvn
 my_stat|||
 my_strftime||5.007002|
 my_strlcat|5.009004||pn
@@ -3591,8 +3609,12 @@ while (<DATA>) {
   $replace{$2} = $1 if m{^\s*#\s*define\s+(\w+)(?:\([^)]*\))?\s+(\w+).*$rccs\s+Replace\s+$rcce};
   $replace{$1} = $2 if m{^\s*$rccs\s+Replace (\w+) with (\w+)\s+$rcce\s*$};
 
-  if (m{^\s*$rccs\s+(\w+)\s+depends\s+on\s+(\w+(\s*,\s*\w+)*)\s+$rcce\s*$}) {
-    push @{$depends{$1}}, map { s/\s+//g; $_ } split /,/, $2;
+  if (m{^\s*$rccs\s+(\w+(\s*,\s*\w+)*)\s+depends\s+on\s+(\w+(\s*,\s*\w+)*)\s+$rcce\s*$}) {
+    my @deps = map { s/\s+//g; $_ } split /,/, $3;
+    my $d;
+    for $d (map { s/\s+//g; $_ } split /,/, $1) {
+      push @{$depends{$d}}, @deps;
+    }
   }
 
   $need{$1} = 1 if m{^#if\s+defined\(NEED_(\w+)(?:_GLOBAL)?\)};
@@ -5018,6 +5040,8 @@ extern U32 DPPP_(my_PL_signals);
 #  define PL_DBsub                  DBsub
 #  define PL_DBtrace                DBtrace
 #  define PL_Sv                     Sv
+#  define PL_bufend                 bufend
+#  define PL_bufptr                 bufptr
 #  define PL_compiling              compiling
 #  define PL_copline                copline
 #  define PL_curcop                 curcop
@@ -5032,6 +5056,9 @@ extern U32 DPPP_(my_PL_signals);
 #  define PL_hexdigit               hexdigit
 #  define PL_hints                  hints
 #  define PL_laststatval            laststatval
+#  define PL_lex_state              lex_state
+#  define PL_lex_stuff              lex_stuff
+#  define PL_linestr                linestr
 #  define PL_na                     na
 #  define PL_perl_destruct_level    perl_destruct_level
 #  define PL_perldb                 perldb
@@ -5047,21 +5074,75 @@ extern U32 DPPP_(my_PL_signals);
 #  define PL_sv_yes                 sv_yes
 #  define PL_tainted                tainted
 #  define PL_tainting               tainting
+#  define PL_tokenbuf               tokenbuf
 /* Replace: 0 */
 #endif
 
-/* Warning: PL_expect, PL_copline, PL_rsfp, PL_rsfp_filters
- * Do not use this variable. It is internal to the perl parser
- * and may change or even be removed in the future. Note that
- * as of perl 5.9.5 you cannot assign to this variable anymore.
+/* Warning: PL_parser
+ * For perl versions earlier than 5.9.5, this is an always
+ * non-NULL dummy. Also, it cannot be dereferenced. Don't
+ * use it if you can avoid is and unless you absolutely know
+ * what you're doing.
+ * If you always check that PL_parser is non-NULL, you can
+ * define DPPP_PL_parser_NO_DUMMY to avoid the creation of
+ * a dummy parser structure.
  */
 
-/* TODO: cannot assign to these vars; is it worth fixing? */
 #if (PERL_BCDVERSION >= 0x5009005)
-#  define PL_expect         (PL_parser ? PL_parser->expect : 0)
-#  define PL_copline        (PL_parser ? PL_parser->copline : 0)
-#  define PL_rsfp           (PL_parser ? PL_parser->rsfp : (PerlIO *) 0)
-#  define PL_rsfp_filters   (PL_parser ? PL_parser->rsfp_filters : (AV *) 0)
+# ifdef DPPP_PL_parser_NO_DUMMY
+#  define D_PPP_my_PL_parser_var(var) ((PL_parser ? PL_parser : \
+                (croak("panic: PL_parser == NULL in %s:%d", \
+                       __FILE__, __LINE__), (yy_parser *) NULL))->var)
+# else
+#  ifdef DPPP_PL_parser_NO_DUMMY_WARNING
+#   define D_PPP_parser_dummy_warning(var)
+#  else
+#   define D_PPP_parser_dummy_warning(var) \
+             warn("warning: dummy PL_" #var " used in %s:%d", __FILE__, __LINE__),
+#  endif
+#  define D_PPP_my_PL_parser_var(var) ((PL_parser ? PL_parser : \
+                (D_PPP_parser_dummy_warning(var) &DPPP_(dummy_PL_parser)))->var)
+#if defined(NEED_PL_parser)
+static yy_parser DPPP_(dummy_PL_parser);
+#elif defined(NEED_PL_parser_GLOBAL)
+yy_parser DPPP_(dummy_PL_parser);
+#else
+extern yy_parser DPPP_(dummy_PL_parser);
+#endif
+
+# endif
+
+/* PL_expect, PL_copline, PL_rsfp, PL_rsfp_filters, PL_linestr, PL_bufptr, PL_bufend, PL_lex_state, PL_lex_stuff, PL_tokenbuf depends on PL_parser */
+/* Warning: PL_expect, PL_copline, PL_rsfp, PL_rsfp_filters, PL_linestr, PL_bufptr, PL_bufend, PL_lex_state, PL_lex_stuff, PL_tokenbuf
+ * Do not use this variable unless you know exactly what you're
+ * doint. It is internal to the perl parser and may change or even
+ * be removed in the future. As of perl 5.9.5, you have to check
+ * for (PL_parser != NULL) for this variable to have any effect.
+ * An always non-NULL PL_parser dummy is provided for earlier
+ * perl versions.
+ * If PL_parser is NULL when you try to access this variable, a
+ * dummy is being accessed instead and a warning is issued unless
+ * you define DPPP_PL_parser_NO_DUMMY_WARNING.
+ * If DPPP_PL_parser_NO_DUMMY is defined, the code trying to access
+ * this variable will croak with a panic message.
+ */
+
+# define PL_expect         D_PPP_my_PL_parser_var(expect)
+# define PL_copline        D_PPP_my_PL_parser_var(copline)
+# define PL_rsfp           D_PPP_my_PL_parser_var(rsfp)
+# define PL_rsfp_filters   D_PPP_my_PL_parser_var(rsfp_filters)
+# define PL_linestr        D_PPP_my_PL_parser_var(linestr)
+# define PL_bufptr         D_PPP_my_PL_parser_var(bufptr)
+# define PL_bufend         D_PPP_my_PL_parser_var(bufend)
+# define PL_lex_state      D_PPP_my_PL_parser_var(lex_state)
+# define PL_lex_stuff      D_PPP_my_PL_parser_var(lex_stuff)
+# define PL_tokenbuf       D_PPP_my_PL_parser_var(tokenbuf)
+
+#else
+
+/* ensure that PL_parser != NULL and cannot be dereferenced */
+# define PL_parser         ((void *) 1)
+
 #endif
 #ifndef dTHR
 #  define dTHR                           dNOOP
@@ -5377,6 +5458,10 @@ extern void DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv);
 
 #if defined(NEED_newCONSTSUB) || defined(NEED_newCONSTSUB_GLOBAL)
 
+/* This is just a trick to avoid a dependency of newCONSTSUB on PL_parser */
+/* (There's no PL_parser in perl < 5.005, so this is completely safe)     */
+#define D_PPP_PL_copline PL_copline
+
 void
 DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv)
 {
@@ -5384,7 +5469,7 @@ DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv)
 	HV *old_cop_stash = PL_curcop->cop_stash;
 	HV *old_curstash = PL_curstash;
 	line_t oldline = PL_curcop->cop_line;
-	PL_curcop->cop_line = PL_copline;
+	PL_curcop->cop_line = D_PPP_PL_copline;
 
 	PL_hints &= ~HINT_BLOCK_SCOPE;
 	if (stash)
@@ -5922,6 +6007,12 @@ DPPP_(my_sv_pvn_force_flags)(pTHX_ SV *sv, STRLEN *lp, I32 flags)
 
 #ifndef SvPV_nomg_const_nolen
 #  define SvPV_nomg_const_nolen(sv)      SvPV_flags_const_nolen(sv, 0)
+#endif
+#ifndef SvPV_renew
+#  define SvPV_renew(sv,n)               STMT_START { SvLEN_set(sv, n); \
+                 SvPV_set((sv), (char *) saferealloc(          \
+                       (Malloc_t)SvPVX(sv), (MEM_SIZE)((n)))); \
+               } STMT_END
 #endif
 #ifndef SvMAGIC_set
 #  define SvMAGIC_set(sv, val)           \
@@ -7516,9 +7607,35 @@ DPPP_(my_my_snprintf)(char *buffer, const Size_t len, const char *format, ...)
     retval = vsprintf(buffer, format, ap);
 #endif
     va_end(ap);
-    if (retval >= (int)len)
+    if (retval < 0 || (len > 0 && (Size_t)retval >= len))
 	Perl_croak(aTHX_ "panic: my_snprintf buffer overflow");
     return retval;
+}
+
+#endif
+#endif
+
+#if !defined(my_sprintf)
+#if defined(NEED_my_sprintf)
+static int DPPP_(my_my_sprintf)(char * buffer, const char * pat, ...);
+static
+#else
+extern int DPPP_(my_my_sprintf)(char * buffer, const char * pat, ...);
+#endif
+
+#define my_sprintf DPPP_(my_my_sprintf)
+#define Perl_my_sprintf DPPP_(my_my_sprintf)
+
+#if defined(NEED_my_sprintf) || defined(NEED_my_sprintf_GLOBAL)
+
+int
+DPPP_(my_my_sprintf)(char *buffer, const char* pat, ...)
+{
+    va_list args;
+    va_start(args, pat);
+    vsprintf(buffer, pat, args);
+    va_end(args);
+    return strlen(buffer);
 }
 
 #endif
