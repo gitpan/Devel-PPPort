@@ -12,9 +12,9 @@
 #
 ################################################################################
 #
-#  $Revision: 61 $
+#  $Revision: 62 $
 #  $Author: mhx $
-#  $Date: 2008/10/12 13:54:21 +0200 $
+#  $Date: 2008/10/21 23:12:30 +0200 $
 #
 ################################################################################
 #
@@ -139,6 +139,7 @@ in older Perl releases:
     CopSTASHPV
     CopSTASHPV_set
     CopyD
+    CPERLscope
     dAX
     dAXMARK
     DEFSV
@@ -1126,7 +1127,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.14_02 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.14_03 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1601,6 +1602,7 @@ my %API = map { /^(\w+)\|([^|]*)\|([^|]*)\|(\w*)$/
 AvFILLp|5.004050||p
 AvFILL|||
 CLASS|||n
+CPERLscope|||p
 CX_CURPAD_SAVE|||
 CX_CURPAD_SV|||
 CopFILEAV|5.006000||p
@@ -4306,6 +4308,49 @@ __DATA__
 #if PERL_REVISION != 5
 #  error ppport.h only works with Perl version 5
 #endif /* PERL_REVISION != 5 */
+#ifndef dTHR
+#  define dTHR                           dNOOP
+#endif
+#ifndef dTHX
+#  define dTHX                           dNOOP
+#endif
+
+#ifndef dTHXa
+#  define dTHXa(x)                       dNOOP
+#endif
+#ifndef pTHX
+#  define pTHX                           void
+#endif
+
+#ifndef pTHX_
+#  define pTHX_
+#endif
+
+#ifndef aTHX
+#  define aTHX
+#endif
+
+#ifndef aTHX_
+#  define aTHX_
+#endif
+
+#if (PERL_BCDVERSION < 0x5006000)
+#  ifdef USE_THREADS
+#    define aTHXR  thr
+#    define aTHXR_ thr,
+#  else
+#    define aTHXR
+#    define aTHXR_
+#  endif
+#  define dTHXR  dTHR
+#else
+#  define aTHXR  aTHX
+#  define aTHXR_ aTHX_
+#  define dTHXR  dTHX
+#endif
+#ifndef dTHXoa
+#  define dTHXoa(x)                      dTHXa(x)
+#endif
 
 #ifdef I_LIMITS
 #  include <limits.h>
@@ -4976,6 +5021,9 @@ typedef NVTYPE NV;
 #ifndef UTF8_MAXBYTES
 #  define UTF8_MAXBYTES                  UTF8_MAXLEN
 #endif
+#ifndef CPERLscope
+#  define CPERLscope(x)                  x
+#endif
 #ifndef PERL_HASH
 #  define PERL_HASH(hash,str,len)        \
      STMT_START	{ \
@@ -4996,6 +5044,19 @@ typedef NVTYPE NV;
 #  define PERLIO_FUNCS_DECL(funcs) PerlIO_funcs funcs
 #  define PERLIO_FUNCS_CAST(funcs) (funcs)
 # endif
+#endif
+
+/* provide these typedefs for older perls */
+#if (PERL_BCDVERSION < 0x5009003)
+
+# ifdef ARGSproto
+typedef OP* (CPERLscope(*Perl_ppaddr_t))(ARGSproto);
+# else
+typedef OP* (CPERLscope(*Perl_ppaddr_t))(pTHX);
+# endif
+
+typedef OP* (CPERLscope(*Perl_check_t)) (pTHX_ OP*);
+
 #endif
 
 #ifndef PERL_SIGNALS_UNSAFE_FLAG
@@ -5143,49 +5204,6 @@ extern yy_parser DPPP_(dummy_PL_parser);
 /* ensure that PL_parser != NULL and cannot be dereferenced */
 # define PL_parser         ((void *) 1)
 
-#endif
-#ifndef dTHR
-#  define dTHR                           dNOOP
-#endif
-#ifndef dTHX
-#  define dTHX                           dNOOP
-#endif
-
-#ifndef dTHXa
-#  define dTHXa(x)                       dNOOP
-#endif
-#ifndef pTHX
-#  define pTHX                           void
-#endif
-
-#ifndef pTHX_
-#  define pTHX_
-#endif
-
-#ifndef aTHX
-#  define aTHX
-#endif
-
-#ifndef aTHX_
-#  define aTHX_
-#endif
-
-#if (PERL_BCDVERSION < 0x5006000)
-#  ifdef USE_THREADS
-#    define aTHXR  thr
-#    define aTHXR_ thr,
-#  else
-#    define aTHXR
-#    define aTHXR_
-#  endif
-#  define dTHXR  dTHR
-#else
-#  define aTHXR  aTHX
-#  define aTHXR_ aTHX_
-#  define dTHXR  dTHX
-#endif
-#ifndef dTHXoa
-#  define dTHXoa(x)                      dTHXa(x)
 #endif
 #ifndef mPUSHs
 #  define mPUSHs(s)                      PUSHs(sv_2mortal(s))
@@ -5705,6 +5723,12 @@ DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv)
 #ifndef SvREFCNT_inc_simple_void_NN
 #  define SvREFCNT_inc_simple_void_NN(sv) (void)(++SvREFCNT((SV*)(sv)))
 #endif
+
+#if (PERL_BCDVERSION < 0x5006000)
+# define D_PPP_CONSTPV_ARG(x)  ((char *) (x))
+#else
+# define D_PPP_CONSTPV_ARG(x)  (x)
+#endif
 #ifndef newSVpvn
 #  define newSVpvn(data,len)             ((data)                                              \
                                     ? ((len) ? newSVpv((data), (len)) : newSVpv("", 0)) \
@@ -5737,7 +5761,7 @@ extern SV * DPPP_(my_newSVpvn_flags)(pTHX_ const char *s, STRLEN len, U32 flags)
 SV *
 DPPP_(my_newSVpvn_flags)(pTHX_ const char *s, STRLEN len, U32 flags)
 {
-  SV *sv = newSVpvn(s, len);
+  SV *sv = newSVpvn(D_PPP_CONSTPV_ARG(s), len);
   SvFLAGS(sv) |= (flags & SVf_UTF8);
   return (flags & SVs_TEMP) ? sv_2mortal(sv) : sv;
 }
