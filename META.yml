@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Devel-PPPort
-version:            3.14_03
+version:            3.14_04
 abstract:           Perl/Pollution/Portability
 author:
     - Marcus Holland-Moritz <mhx@cpan.org>
@@ -13,7 +13,7 @@ no_index:
     directory:
         - t
         - inc
-generated_by:       ExtUtils::MakeMaker version 6.47_02
+generated_by:       ExtUtils::MakeMaker version 6.48
 meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html
     version:  1.4
