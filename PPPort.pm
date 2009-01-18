@@ -12,13 +12,13 @@
 #
 ################################################################################
 #
-#  $Revision: 63 $
+#  $Revision: 64 $
 #  $Author: mhx $
-#  $Date: 2008/10/30 01:47:31 +0100 $
+#  $Date: 2009/01/18 14:10:49 +0100 $
 #
 ################################################################################
 #
-#  Version 3.x, Copyright (C) 2004-2008, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -143,6 +143,7 @@ in older Perl releases:
     dAX
     dAXMARK
     DEFSV
+    DEFSV_set
     dITEMS
     dMY_CXT
     dMY_CXT_SV
@@ -1130,7 +1131,7 @@ Version 3.x was ported back to CPAN by Marcus Holland-Moritz.
 
 =head1 COPYRIGHT
 
-Version 3.x, Copyright (C) 2004-2008, Marcus Holland-Moritz.
+Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
 
 Version 2.x, Copyright (C) 2001, Paul Marquess.
 
@@ -1150,7 +1151,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.14_05 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.15 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1538,7 +1539,7 @@ SKIP
 |>
 |>=head1 COPYRIGHT
 |>
-|>Version 3.x, Copyright (c) 2004-2008, Marcus Holland-Moritz.
+|>Version 3.x, Copyright (c) 2004-2009, Marcus Holland-Moritz.
 |>
 |>Version 2.x, Copyright (C) 2001, Paul Marquess.
 |>
@@ -1647,6 +1648,7 @@ Copy|||
 CvPADLIST|||
 CvSTASH|||
 CvWEAKOUTSIDE|||
+DEFSV_set|||p
 DEFSV|5.004050||p
 END_EXTERN_C|5.005000||p
 ENTER|||
@@ -4281,7 +4283,7 @@ sub strip
 if (\@ARGV && \$ARGV[0] eq '--unstrip') {
   eval { require Devel::PPPort };
   \$@ and die "Cannot require Devel::PPPort, please install.\\n";
-  if (\$Devel::PPPort::VERSION < $VERSION) {
+  if (eval \$Devel::PPPort::VERSION < $VERSION) {
     die "$0 was originally generated with Devel::PPPort $VERSION.\\n"
       . "Your Devel::PPPort is only version \$Devel::PPPort::VERSION.\\n"
       . "Please install a newer version, or --unstrip will not work.\\n";
@@ -4987,6 +4989,10 @@ typedef NVTYPE NV;
 
 #ifndef SAVE_DEFSV
 #  define SAVE_DEFSV                     SAVESPTR(GvSV(PL_defgv))
+#endif
+
+#ifndef DEFSV_set
+#  define DEFSV_set(sv)                  (GvSV(PL_defgv) = (sv))
 #endif
 
 /* Older perls (<=5.003) lack AvFILLp */
