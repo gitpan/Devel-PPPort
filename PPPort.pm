@@ -162,6 +162,7 @@ in older Perl releases:
     eval_pv
     eval_sv
     EXTERN_C
+    G_METHOD
     get_av
     get_cv
     get_hv
@@ -1151,7 +1152,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.15 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.16 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1663,6 +1664,7 @@ GROK_NUMERIC_RADIX|5.007002||p
 G_ARRAY|||
 G_DISCARD|||
 G_EVAL|||
+G_METHOD|||p
 G_NOARGS|||
 G_SCALAR|||
 G_VOID||5.004000|
@@ -4992,7 +4994,7 @@ typedef NVTYPE NV;
 #endif
 
 #ifndef DEFSV_set
-#  define DEFSV_set(sv)                  (GvSV(PL_defgv) = (sv))
+#  define DEFSV_set(sv)                  (DEFSV = (sv))
 #endif
 
 /* Older perls (<=5.003) lack AvFILLp */
@@ -5401,6 +5403,8 @@ extern yy_parser DPPP_(dummy_PL_parser);
 #ifndef eval_sv
 #  define eval_sv                        perl_eval_sv
 #endif
+
+/* Replace: 0 */
 #ifndef PERL_LOADMOD_DENY
 #  define PERL_LOADMOD_DENY              0x1
 #endif
@@ -5413,7 +5417,19 @@ extern yy_parser DPPP_(dummy_PL_parser);
 #  define PERL_LOADMOD_IMPORT_OPS        0x4
 #endif
 
-/* Replace: 0 */
+#ifndef G_METHOD
+# define G_METHOD		64
+# ifdef call_sv
+#  undef call_sv
+# endif
+# if (PERL_BCDVERSION < 0x5006000)
+#  define call_sv(sv, flags)  ((flags) & G_METHOD ? perl_call_method((char *) SvPV_nolen_const(sv), \
+				(flags) & ~G_METHOD) : perl_call_sv(sv, flags))
+# else
+#  define call_sv(sv, flags)  ((flags) & G_METHOD ? Perl_call_method(aTHX_ (char *) SvPV_nolen_const(sv), \
+				(flags) & ~G_METHOD) : Perl_call_sv(aTHX_ sv, flags))
+# endif
+#endif
 
 /* Replace perl_eval_pv with eval_pv */
 
