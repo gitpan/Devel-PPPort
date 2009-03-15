@@ -385,6 +385,7 @@ in older Perl releases:
     pTHX
     pTHX_
     PTR2IV
+    PTR2nat
     PTR2NV
     PTR2ul
     PTR2UV
@@ -583,12 +584,21 @@ Perl below which it is unsupported:
   fetch_cop_label
   gv_fetchmethod_flags
   hv_assert
+  mro_get_from_name
+  mro_get_private_data
+  mro_register
+  mro_set_mro
+  mro_set_private_data
   pad_sv
   pregfree2
   ref
+  save_adelete
+  save_helem_flags
   save_padsv_and_mortalize
+  save_pushptr
   stashpv_hvname_match
   sv_insert_flags
+  sv_utf8_upgrade_flags_grow
 
 =item perl 5.10.0
 
@@ -805,6 +815,7 @@ Perl below which it is unsupported:
   sv_catsv_flags
   sv_setsv_flags
   sv_utf8_upgrade_flags
+  sv_utf8_upgrade_nomg
   swash_fetch
 
 =item perl 5.7.1
@@ -1152,7 +1163,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.16 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.17 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1630,7 +1641,7 @@ my %API = map { /^(\w+)\|([^|]*)\|([^|]*)\|(\w*)$/
 AvFILLp|5.004050||p
 AvFILL|||
 CLASS|||n
-CPERLscope|||p
+CPERLscope|5.005000||p
 CX_CURPAD_SAVE|||
 CX_CURPAD_SV|||
 CopFILEAV|5.006000||p
@@ -1649,7 +1660,7 @@ Copy|||
 CvPADLIST|||
 CvSTASH|||
 CvWEAKOUTSIDE|||
-DEFSV_set|||p
+DEFSV_set|5.011000||p
 DEFSV|5.004050||p
 END_EXTERN_C|5.005000||p
 ENTER|||
@@ -1664,7 +1675,7 @@ GROK_NUMERIC_RADIX|5.007002||p
 G_ARRAY|||
 G_DISCARD|||
 G_EVAL|||
-G_METHOD|||p
+G_METHOD|5.006001||p
 G_NOARGS|||
 G_SCALAR|||
 G_VOID||5.004000|
@@ -1786,20 +1797,20 @@ PERL_MAGIC_uvar_elem|5.007003||p
 PERL_MAGIC_uvar|5.007002||p
 PERL_MAGIC_vec|5.007002||p
 PERL_MAGIC_vstring|5.008001||p
-PERL_PV_ESCAPE_ALL|||p
-PERL_PV_ESCAPE_FIRSTCHAR|||p
-PERL_PV_ESCAPE_NOBACKSLASH|||p
-PERL_PV_ESCAPE_NOCLEAR|||p
-PERL_PV_ESCAPE_QUOTE|||p
-PERL_PV_ESCAPE_RE|||p
-PERL_PV_ESCAPE_UNI_DETECT|||p
-PERL_PV_ESCAPE_UNI|||p
-PERL_PV_PRETTY_DUMP|||p
-PERL_PV_PRETTY_ELLIPSES|||p
-PERL_PV_PRETTY_LTGT|||p
-PERL_PV_PRETTY_NOCLEAR|||p
-PERL_PV_PRETTY_QUOTE|||p
-PERL_PV_PRETTY_REGPROP|||p
+PERL_PV_ESCAPE_ALL|5.009004||p
+PERL_PV_ESCAPE_FIRSTCHAR|5.009004||p
+PERL_PV_ESCAPE_NOBACKSLASH|5.009004||p
+PERL_PV_ESCAPE_NOCLEAR|5.009004||p
+PERL_PV_ESCAPE_QUOTE|5.009004||p
+PERL_PV_ESCAPE_RE|5.009005||p
+PERL_PV_ESCAPE_UNI_DETECT|5.009004||p
+PERL_PV_ESCAPE_UNI|5.009004||p
+PERL_PV_PRETTY_DUMP|5.009004||p
+PERL_PV_PRETTY_ELLIPSES|5.010000||p
+PERL_PV_PRETTY_LTGT|5.009004||p
+PERL_PV_PRETTY_NOCLEAR|5.010000||p
+PERL_PV_PRETTY_QUOTE|5.009004||p
+PERL_PV_PRETTY_REGPROP|5.009004||p
 PERL_QUAD_MAX|5.004000||p
 PERL_QUAD_MIN|5.004000||p
 PERL_REVISION|5.006000||p
@@ -1832,8 +1843,8 @@ PL_DBsingle|||pn
 PL_DBsub|||pn
 PL_DBtrace|||pn
 PL_Sv|5.005000||p
-PL_bufend|||p
-PL_bufptr|||p
+PL_bufend|5.011000||p
+PL_bufptr|5.011000||p
 PL_compiling|5.004050||p
 PL_copline|5.011000||p
 PL_curcop|5.004050||p
@@ -1849,14 +1860,14 @@ PL_hexdigit|5.005000||p
 PL_hints|5.005000||p
 PL_last_in_gv|||n
 PL_laststatval|5.005000||p
-PL_lex_state|||p
-PL_lex_stuff|||p
-PL_linestr|||p
+PL_lex_state|5.011000||p
+PL_lex_stuff|5.011000||p
+PL_linestr|5.011000||p
 PL_modglobal||5.005000|n
 PL_na|5.004050||pn
 PL_no_modify|5.006000||p
-PL_ofs_sv|||n
-PL_parser|||p
+PL_ofsgv|||n
+PL_parser|5.009005||p
 PL_perl_destruct_level|5.004050||p
 PL_perldb|5.004050||p
 PL_ppaddr|5.006000||p
@@ -1874,7 +1885,7 @@ PL_sv_undef|5.004050||pn
 PL_sv_yes|5.004050||pn
 PL_tainted|5.004050||p
 PL_tainting|5.004050||p
-PL_tokenbuf|||p
+PL_tokenbuf|5.011000||p
 POP_MULTICALL||5.011000|
 POPi|||n
 POPl|||n
@@ -1886,6 +1897,7 @@ POPs|||n
 PTR2IV|5.006000||p
 PTR2NV|5.006000||p
 PTR2UV|5.006000||p
+PTR2nat|5.009003||p
 PTR2ul|5.007001||p
 PTRV|5.006000||p
 PUSHMARK|||
@@ -2033,7 +2045,7 @@ SvPV_nolen|5.006000||p
 SvPV_nomg_const_nolen|5.009003||p
 SvPV_nomg_const|5.009003||p
 SvPV_nomg|5.007002||p
-SvPV_renew|||p
+SvPV_renew|5.009003||p
 SvPV_set|||
 SvPVbyte_force||5.009002|
 SvPVbyte_nolen||5.006000|
@@ -2215,7 +2227,6 @@ av_create_and_unshift_one||5.009005|
 av_delete||5.006000|
 av_exists||5.006000|
 av_extend|||
-av_fake|||
 av_fetch|||
 av_fill|||
 av_iter_p||5.011000|
@@ -2322,7 +2333,6 @@ curmad|||
 custom_op_desc||5.007003|
 custom_op_name||5.007003|
 cv_ckproto_len|||
-cv_ckproto|||
 cv_clone|||
 cv_const_sv||5.004000|
 cv_dump|||
@@ -2468,7 +2478,6 @@ exec_failed|||
 expect_number|||
 fbm_compile||5.005000|
 fbm_instr||5.005000|
-fd_on_nosuid_fs|||
 feature_is_enabled|||
 fetch_cop_label||5.011000|
 filter_add|||
@@ -2512,6 +2521,7 @@ get_db_sub|||
 get_debug_opts|||
 get_hash_seed|||
 get_hv|5.006000||p
+get_isa_hash|||
 get_mstats|||
 get_no_modify|||
 get_num|||
@@ -2624,6 +2634,7 @@ ibcmp_utf8||5.007003|
 ibcmp|||
 incline|||
 incpush_if_exists|||
+incpush_use_sep|||
 incpush|||
 ingroup|||
 init_argv_symbols|||
@@ -2645,24 +2656,23 @@ intuit_method|||
 intuit_more|||
 invert|||
 io_close|||
-isALNUMC|||p
+isALNUMC|5.006000||p
 isALNUM|||
 isALPHA|||
-isASCII|||p
-isBLANK|||p
-isCNTRL|||p
+isASCII|5.006000||p
+isBLANK|5.006001||p
+isCNTRL|5.006000||p
 isDIGIT|||
-isGRAPH|||p
+isGRAPH|5.006000||p
 isLOWER|||
-isPRINT|||p
-isPSXSPC|||p
-isPUNCT|||p
+isPRINT|5.004000||p
+isPSXSPC|5.006001||p
+isPUNCT|5.006000||p
 isSPACE|||
 isUPPER|||
-isXDIGIT|||p
+isXDIGIT|5.006000||p
 is_an_int|||
 is_gv_magical_sv|||
-is_gv_magical|||
 is_handle_constructor|||n
 is_list_assignment|||
 is_lvalue_sub||5.007001|
@@ -2800,7 +2810,6 @@ magic_setvec|||
 magic_set|||
 magic_sizepack|||
 magic_wipepack|||
-magicname|||
 make_matcher|||
 make_trie_failtable|||
 make_trie|||
@@ -2813,6 +2822,7 @@ measure_struct|||
 memEQ|5.004000||p
 memNE|5.004000||p
 mem_collxfrm|||
+mem_log_common|||n
 mess_alloc|||
 mess_nocontext|||vn
 mess||5.006000|v
@@ -2837,13 +2847,17 @@ mod|||
 more_bodies|||
 more_sv|||
 moreswitches|||
-mro_get_linear_isa_c3|||
+mro_get_from_name||5.011000|
 mro_get_linear_isa_dfs|||
 mro_get_linear_isa||5.009005|
+mro_get_private_data||5.011000|
 mro_isa_changed_in|||
 mro_meta_dup|||
 mro_meta_init|||
 mro_method_changed_in||5.009005|
+mro_register||5.011000|
+mro_set_mro||5.011000|
+mro_set_private_data||5.011000|
 mul128|||
 mulexp10|||n
 my_atof2||5.007002|
@@ -2906,7 +2920,6 @@ my_swabn|||n
 my_swap|||
 my_unexec|||
 my_vsnprintf||5.009004|n
-my|||
 need_utf8|||n
 newANONATTRSUB||5.006000|
 newANONHASH|||
@@ -3002,7 +3015,6 @@ nuke_stacks|||
 num_overflow|||n
 offer_nice_chunk|||
 oopsAV|||
-oopsCV|||
 oopsHV|||
 op_clear|||
 op_const_sv|||
@@ -3192,6 +3204,7 @@ same_dirent|||
 save_I16||5.004000|
 save_I32|||
 save_I8||5.006000|
+save_adelete||5.011000|
 save_aelem||5.004050|
 save_alloc||5.006000|
 save_aptr|||
@@ -3209,7 +3222,9 @@ save_generic_svref||5.005030|
 save_gp||5.004000|
 save_hash|||
 save_hek_flags|||n
+save_helem_flags||5.011000|
 save_helem||5.004050|
+save_hints|||
 save_hptr|||
 save_int|||
 save_item|||
@@ -3223,6 +3238,10 @@ save_nogv|||
 save_op|||
 save_padsv_and_mortalize||5.011000|
 save_pptr|||
+save_pushi32ptr|||
+save_pushptri32ptr|||
+save_pushptrptr|||
+save_pushptr||5.011000|
 save_re_context||5.006000|
 save_scalar_at|||
 save_scalar|||
@@ -3265,6 +3284,7 @@ scan_vstring||5.009005|
 scan_word|||
 scope|||
 screaminstr||5.005000|
+search_const|||
 seed||5.008001|
 sequence_num|||
 sequence_tail|||
@@ -3274,7 +3294,6 @@ set_numeric_local||5.006000|
 set_numeric_radix||5.006000|
 set_numeric_standard||5.006000|
 setdefout|||
-setenv_getix|||
 share_hek_flags|||
 share_hek||5.004000|
 si_dup|||
@@ -3469,7 +3488,9 @@ sv_usepvn|||
 sv_utf8_decode||5.006000|
 sv_utf8_downgrade||5.006000|
 sv_utf8_encode||5.006000|
+sv_utf8_upgrade_flags_grow||5.011000|
 sv_utf8_upgrade_flags||5.007002|
+sv_utf8_upgrade_nomg||5.007002|
 sv_utf8_upgrade||5.007001|
 sv_uv|5.005000||p
 sv_vcatpvf_mg|5.006000|5.004000|p
@@ -4915,7 +4936,6 @@ typedef NVTYPE NV;
 #endif
 
 #ifndef INT2PTR
-
 #  if (IVSIZE == PTRSIZE) && (UVSIZE == PTRSIZE)
 #    define PTRV                  UV
 #    define INT2PTR(any,d)        (any)(d)
@@ -4927,19 +4947,34 @@ typedef NVTYPE NV;
 #    endif
 #    define INT2PTR(any,d)        (any)(PTRV)(d)
 #  endif
+#endif
 
-#  define NUM2PTR(any,d)  (any)(PTRV)(d)
-#  define PTR2IV(p)       INT2PTR(IV,p)
-#  define PTR2UV(p)       INT2PTR(UV,p)
-#  define PTR2NV(p)       NUM2PTR(NV,p)
-
+#ifndef PTR2ul
 #  if PTRSIZE == LONGSIZE
 #    define PTR2ul(p)     (unsigned long)(p)
 #  else
 #    define PTR2ul(p)     INT2PTR(unsigned long,p)
 #  endif
+#endif
+#ifndef PTR2nat
+#  define PTR2nat(p)                     (PTRV)(p)
+#endif
 
-#endif /* !INT2PTR */
+#ifndef NUM2PTR
+#  define NUM2PTR(any,d)                 (any)PTR2nat(d)
+#endif
+
+#ifndef PTR2IV
+#  define PTR2IV(p)                      INT2PTR(IV,p)
+#endif
+
+#ifndef PTR2UV
+#  define PTR2UV(p)                      INT2PTR(UV,p)
+#endif
+
+#ifndef PTR2NV
+#  define PTR2NV(p)                      NUM2PTR(NV,p)
+#endif
 
 #undef START_EXTERN_C
 #undef END_EXTERN_C
