@@ -12,9 +12,9 @@
 #
 ################################################################################
 #
-#  $Revision: 64 $
+#  $Revision: 65 $
 #  $Author: mhx $
-#  $Date: 2009/01/18 14:10:49 +0100 $
+#  $Date: 2009/06/12 04:10:36 +0200 $
 #
 ################################################################################
 #
@@ -173,9 +173,15 @@ in older Perl releases:
     GROK_NUMERIC_RADIX
     grok_numeric_radix
     grok_oct
+    gv_fetchpvn_flags
+    gv_fetchpvs
     gv_stashpvn
+    gv_stashpvs
+    GvSVn
     hv_fetchs
     hv_stores
+    HvNAME_get
+    HvNAMELEN_get
     IN_LOCALE
     IN_LOCALE_COMPILETIME
     IN_LOCALE_RUNTIME
@@ -192,6 +198,7 @@ in older Perl releases:
     isBLANK
     isCNTRL
     isGRAPH
+    isGV_with_GP
     isPRINT
     isPSXSPC
     isPUNCT
@@ -223,6 +230,7 @@ in older Perl releases:
     newCONSTSUB
     newRV_inc
     newRV_noinc
+    newSV_type
     newSVpvn
     newSVpvn_flags
     newSVpvn_share
@@ -348,9 +356,12 @@ in older Perl releases:
     PL_dirty
     PL_dowarn
     PL_errgv
+    PL_error_count
     PL_expect
     PL_hexdigit
     PL_hints
+    PL_in_my
+    PL_in_my_stash
     PL_laststatval
     PL_lex_state
     PL_lex_stuff
@@ -446,6 +457,7 @@ in older Perl releases:
     sv_vsetpvf_mg
     SVf
     SVf_UTF8
+    SVfARG
     SvGETMAGIC
     SvIV_nomg
     SvMAGIC_set
@@ -556,6 +568,7 @@ in older Perl releases:
     XPUSHmortal
     XPUSHu
     XSprePUSH
+    XSPROTO
     XSRETURN
     XSRETURN_UV
     XST_mUV
@@ -1163,7 +1176,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.18 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.18_01 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1426,6 +1439,7 @@ SKIP
 |>    my_strlcpy()              NEED_my_strlcpy              NEED_my_strlcpy_GLOBAL
 |>    newCONSTSUB()             NEED_newCONSTSUB             NEED_newCONSTSUB_GLOBAL
 |>    newRV_noinc()             NEED_newRV_noinc             NEED_newRV_noinc_GLOBAL
+|>    newSV_type()              NEED_newSV_type              NEED_newSV_type_GLOBAL
 |>    newSVpvn_flags()          NEED_newSVpvn_flags          NEED_newSVpvn_flags_GLOBAL
 |>    newSVpvn_share()          NEED_newSVpvn_share          NEED_newSVpvn_share_GLOBAL
 |>    pv_display()              NEED_pv_display              NEED_pv_display_GLOBAL
@@ -1680,6 +1694,7 @@ G_NOARGS|||
 G_SCALAR|||
 G_VOID||5.004000|
 GetVars|||
+GvSVn|||p
 GvSV|||
 Gv_AMupdate|||
 HEf_SVKEY||5.004000|
@@ -1692,6 +1707,8 @@ HeSVKEY_set||5.004000|
 HeSVKEY||5.004000|
 HeUTF8||5.011000|
 HeVAL||5.004000|
+HvNAMELEN_get|||p
+HvNAME_get|||p
 HvNAME|||
 INT2PTR|5.006000||p
 IN_LOCALE_COMPILETIME|5.007002||p
@@ -1855,9 +1872,12 @@ PL_diehook|5.004050||p
 PL_dirty|5.004050||p
 PL_dowarn|||pn
 PL_errgv|5.004050||p
+PL_error_count|||p
 PL_expect|5.011000||p
 PL_hexdigit|5.005000||p
 PL_hints|5.005000||p
+PL_in_my_stash|||p
+PL_in_my|||p
 PL_last_in_gv|||n
 PL_laststatval|5.005000||p
 PL_lex_state|5.011000||p
@@ -1963,6 +1983,7 @@ SV_MUTABLE_RETURN|5.009003||p
 SV_NOSTEAL|5.009002||p
 SV_SMAGIC|5.009003||p
 SV_UTF8_NO_ENCODING|5.008001||p
+SVfARG|||p
 SVf_UTF8|5.006000||p
 SVf|5.006000||p
 SVt_IV|||
@@ -2171,6 +2192,7 @@ XPUSHn|||
 XPUSHp|||
 XPUSHs|||
 XPUSHu|5.004000||p
+XSPROTO|||p
 XSRETURN_EMPTY|||
 XSRETURN_IV|||
 XSRETURN_NO|||
@@ -2566,7 +2588,8 @@ gv_fetchmethod_autoload||5.004000|
 gv_fetchmethod_flags||5.011000|
 gv_fetchmethod|||
 gv_fetchmeth|||
-gv_fetchpvn_flags||5.009002|
+gv_fetchpvn_flags|5.009002|5.009002|p
+gv_fetchpvs|||p
 gv_fetchpv|||
 gv_fetchsv||5.009002|
 gv_fullname3||5.004000|
@@ -2578,7 +2601,7 @@ gv_init_sv|||
 gv_init|||
 gv_name_set||5.009004|
 gv_stashpvn|5.004000||p
-gv_stashpvs||5.009003|
+gv_stashpvs|5.009003|5.009003|p
 gv_stashpv|||
 gv_stashsv|||
 he_dup|||
@@ -2664,6 +2687,7 @@ isBLANK|5.006001||p
 isCNTRL|5.006000||p
 isDIGIT|||
 isGRAPH|5.006000||p
+isGV_with_GP|||p
 isLOWER|||
 isPRINT|5.004000||p
 isPSXSPC|5.006001||p
@@ -2968,7 +2992,7 @@ newSTATEOP|||
 newSUB|||
 newSVOP|||
 newSVREF|||
-newSV_type||5.009005|
+newSV_type|5.009005|5.009005|p
 newSVhek||5.009003|
 newSViv|||
 newSVnv|||
@@ -5101,6 +5125,13 @@ typedef NVTYPE NV;
           return;                                         \
       } STMT_END
 #endif
+#ifndef XSPROTO
+#  define XSPROTO(name)                  void name(pTHX_ CV* cv)
+#endif
+
+#ifndef SVfARG
+#  define SVfARG(p)                      ((void*)(p))
+#endif
 #ifndef PERL_ABS
 #  define PERL_ABS(x)                    ((x) < 0 ? -(x) : (x))
 #endif
@@ -5280,9 +5311,11 @@ extern U32 DPPP_(my_PL_signals);
 #  define PL_dirty                  dirty
 #  define PL_dowarn                 dowarn
 #  define PL_errgv                  errgv
+#  define PL_error_count            error_count
 #  define PL_expect                 expect
 #  define PL_hexdigit               hexdigit
 #  define PL_hints                  hints
+#  define PL_in_my                  in_my
 #  define PL_laststatval            laststatval
 #  define PL_lex_state              lex_state
 #  define PL_lex_stuff              lex_stuff
@@ -5365,6 +5398,10 @@ extern yy_parser DPPP_(dummy_PL_parser);
 # define PL_lex_state      D_PPP_my_PL_parser_var(lex_state)
 # define PL_lex_stuff      D_PPP_my_PL_parser_var(lex_stuff)
 # define PL_tokenbuf       D_PPP_my_PL_parser_var(tokenbuf)
+# define PL_in_my          D_PPP_my_PL_parser_var(in_my)
+# define PL_in_my_stash    D_PPP_my_PL_parser_var(in_my_stash)
+# define PL_error_count    D_PPP_my_PL_parser_var(error_count)
+
 
 #else
 
@@ -5903,6 +5940,35 @@ DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv)
 
 #ifndef SvREFCNT_inc_simple_void_NN
 #  define SvREFCNT_inc_simple_void_NN(sv) (void)(++SvREFCNT((SV*)(sv)))
+#endif
+
+#ifndef newSV_type
+
+#if defined(NEED_newSV_type)
+static SV* DPPP_(my_newSV_type)(pTHX_ svtype const t);
+static
+#else
+extern SV* DPPP_(my_newSV_type)(pTHX_ svtype const t);
+#endif
+
+#ifdef newSV_type
+#  undef newSV_type
+#endif
+#define newSV_type(a) DPPP_(my_newSV_type)(aTHX_ a)
+#define Perl_newSV_type DPPP_(my_newSV_type)
+
+#if defined(NEED_newSV_type) || defined(NEED_newSV_type_GLOBAL)
+
+SV*
+DPPP_(my_newSV_type)(pTHX_ svtype const t)
+{
+  SV* const sv = newSV(0);
+  sv_upgrade(sv, t);
+  return sv;
+}
+
+#endif
+
 #endif
 
 #if (PERL_BCDVERSION < 0x5006000)
@@ -6492,6 +6558,19 @@ DPPP_(my_newSVpvn_share)(pTHX_ const char *src, I32 len, U32 hash)
 #ifndef SvSHARED_HASH
 #  define SvSHARED_HASH(sv)              (0 + SvUVX(sv))
 #endif
+#ifndef HvNAME_get
+#  define HvNAME_get(hv)                 HvNAME(hv)
+#endif
+#ifndef HvNAMELEN_get
+#  define HvNAMELEN_get(hv)              (HvNAME_get(hv) ? (I32)strlen(HvNAME_get(hv)) : 0)
+#endif
+#ifndef GvSVn
+#  define GvSVn(gv)                      GvSV(gv)
+#endif
+
+#ifndef isGV_with_GP
+#  define isGV_with_GP(gv)               isGV(gv)
+#endif
 #ifndef WARN_ALL
 #  define WARN_ALL                       0
 #endif
@@ -6754,6 +6833,17 @@ DPPP_(my_warner)(U32 err, const char *pat, ...)
 
 #ifndef hv_stores
 #  define hv_stores(hv, key, val)        hv_store(hv, key "", sizeof(key) - 1, val, 0)
+#endif
+#ifndef gv_fetchpvn_flags
+#  define gv_fetchpvn_flags(name, len, flags, svt) gv_fetchpv(name, flags, svt)
+#endif
+
+#ifndef gv_fetchpvs
+#  define gv_fetchpvs(name, flags, svt)  gv_fetchpvn_flags(name "", sizeof(name) - 1, flags, svt)
+#endif
+
+#ifndef gv_stashpvs
+#  define gv_stashpvs(name, flags)       gv_stashpvn(name "", sizeof(name) - 1, flags)
 #endif
 #ifndef SvGETMAGIC
 #  define SvGETMAGIC(x)                  STMT_START { if (SvGMAGICAL(x)) mg_get(x); } STMT_END
