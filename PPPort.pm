@@ -589,6 +589,7 @@ Perl below which it is unsupported:
 
   HeUTF8
   MULTICALL
+  PERL_SYS_TERM
   POP_MULTICALL
   PUSH_MULTICALL
   SvOOK_offset
@@ -634,7 +635,6 @@ Perl below which it is unsupported:
   mro_get_linear_isa
   mro_method_changed_in
   my_dirfd
-  newSV_type
   pregcomp
   ptr_table_clear
   ptr_table_fetch
@@ -674,7 +674,6 @@ Perl below which it is unsupported:
   dMULTICALL
   doref
   gv_const_sv
-  gv_stashpvs
   hv_eiter_p
   hv_eiter_set
   hv_name_set
@@ -697,7 +696,6 @@ Perl below which it is unsupported:
 
   SvPVbyte_force
   find_rundefsvoffset
-  gv_fetchpvn_flags
   gv_fetchsv
   op_refcnt_lock
   op_refcnt_unlock
@@ -867,6 +865,7 @@ Perl below which it is unsupported:
 
 =item perl 5.6.0
 
+  PERL_SYS_INIT3
   SvIOK_UV
   SvIOK_notUV
   SvIOK_only_UV
@@ -1176,7 +1175,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.18_01 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.19 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1694,7 +1693,7 @@ G_NOARGS|||
 G_SCALAR|||
 G_VOID||5.004000|
 GetVars|||
-GvSVn|||p
+GvSVn|5.009003||p
 GvSV|||
 Gv_AMupdate|||
 HEf_SVKEY||5.004000|
@@ -1707,8 +1706,8 @@ HeSVKEY_set||5.004000|
 HeSVKEY||5.004000|
 HeUTF8||5.011000|
 HeVAL||5.004000|
-HvNAMELEN_get|||p
-HvNAME_get|||p
+HvNAMELEN_get|5.009003||p
+HvNAME_get|5.009003||p
 HvNAME|||
 INT2PTR|5.006000||p
 IN_LOCALE_COMPILETIME|5.007002||p
@@ -1839,6 +1838,9 @@ PERL_SHORT_MAX|5.004000||p
 PERL_SHORT_MIN|5.004000||p
 PERL_SIGNALS_UNSAFE_FLAG|5.008001||p
 PERL_SUBVERSION|5.006000||p
+PERL_SYS_INIT3||5.006000|
+PERL_SYS_INIT|||
+PERL_SYS_TERM||5.011000|
 PERL_UCHAR_MAX|5.004000||p
 PERL_UCHAR_MIN|5.004000||p
 PERL_UINT_MAX|5.004000||p
@@ -1872,12 +1874,12 @@ PL_diehook|5.004050||p
 PL_dirty|5.004050||p
 PL_dowarn|||pn
 PL_errgv|5.004050||p
-PL_error_count|||p
+PL_error_count|5.011000||p
 PL_expect|5.011000||p
 PL_hexdigit|5.005000||p
 PL_hints|5.005000||p
-PL_in_my_stash|||p
-PL_in_my|||p
+PL_in_my_stash|5.011000||p
+PL_in_my|5.011000||p
 PL_last_in_gv|||n
 PL_laststatval|5.005000||p
 PL_lex_state|5.011000||p
@@ -1983,7 +1985,7 @@ SV_MUTABLE_RETURN|5.009003||p
 SV_NOSTEAL|5.009002||p
 SV_SMAGIC|5.009003||p
 SV_UTF8_NO_ENCODING|5.008001||p
-SVfARG|||p
+SVfARG|5.009005||p
 SVf_UTF8|5.006000||p
 SVf|5.006000||p
 SVt_IV|||
@@ -2192,7 +2194,7 @@ XPUSHn|||
 XPUSHp|||
 XPUSHs|||
 XPUSHu|5.004000||p
-XSPROTO|||p
+XSPROTO|5.010000||p
 XSRETURN_EMPTY|||
 XSRETURN_IV|||
 XSRETURN_NO|||
@@ -2271,7 +2273,6 @@ boolSV|5.004000||p
 boot_core_PerlIO|||
 boot_core_UNIVERSAL|||
 boot_core_mro|||
-boot_core_xsutils|||
 bytes_from_utf8||5.007001|
 bytes_to_uni|||n
 bytes_to_utf8||5.006001|
@@ -2557,7 +2558,6 @@ get_vtbl||5.005030|
 getcwd_sv||5.007002|
 getenv_len|||
 glob_2number|||
-glob_2pv|||
 glob_assign_glob|||
 glob_assign_ref|||
 gp_dup|||
@@ -2588,8 +2588,8 @@ gv_fetchmethod_autoload||5.004000|
 gv_fetchmethod_flags||5.011000|
 gv_fetchmethod|||
 gv_fetchmeth|||
-gv_fetchpvn_flags|5.009002|5.009002|p
-gv_fetchpvs|||p
+gv_fetchpvn_flags|5.009002||p
+gv_fetchpvs|5.009004||p
 gv_fetchpv|||
 gv_fetchsv||5.009002|
 gv_fullname3||5.004000|
@@ -2601,7 +2601,7 @@ gv_init_sv|||
 gv_init|||
 gv_name_set||5.009004|
 gv_stashpvn|5.004000||p
-gv_stashpvs|5.009003|5.009003|p
+gv_stashpvs|5.009003||p
 gv_stashpv|||
 gv_stashsv|||
 he_dup|||
@@ -2687,7 +2687,7 @@ isBLANK|5.006001||p
 isCNTRL|5.006000||p
 isDIGIT|||
 isGRAPH|5.006000||p
-isGV_with_GP|||p
+isGV_with_GP|5.009004||p
 isLOWER|||
 isPRINT|5.004000||p
 isPSXSPC|5.006001||p
@@ -2992,7 +2992,7 @@ newSTATEOP|||
 newSUB|||
 newSVOP|||
 newSVREF|||
-newSV_type|5.009005|5.009005|p
+newSV_type|5.009005||p
 newSVhek||5.009003|
 newSViv|||
 newSVnv|||
@@ -3413,6 +3413,7 @@ sv_derived_from||5.004000|
 sv_destroyable||5.010000|
 sv_does||5.009004|
 sv_dump|||
+sv_dup_inc_multiple|||
 sv_dup|||
 sv_eq|||
 sv_exp_grow|||
