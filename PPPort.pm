@@ -12,9 +12,9 @@
 #
 ################################################################################
 #
-#  $Revision: 65 $
+#  $Revision: 66 $
 #  $Author: mhx $
-#  $Date: 2009/06/12 04:10:36 +0200 $
+#  $Date: 2010/02/20 19:39:31 +0100 $
 #
 ################################################################################
 #
@@ -49,7 +49,7 @@ C<Devel::PPPort> contains a single function, called C<WriteFile>. Its
 only purpose is to write the F<ppport.h> C header file. This file
 contains a series of macros and, if explicitly requested, functions that
 allow XS modules to be built using older versions of Perl. Currently,
-Perl versions from 5.003 to 5.10.0 are supported.
+Perl versions from 5.003 to 5.11.5 are supported.
 
 This module is used by C<h2xs> to write the file F<ppport.h>.
 
@@ -103,7 +103,7 @@ Otherwise it returns a false value.
 
 =head1 COMPATIBILITY
 
-F<ppport.h> supports Perl versions from 5.003 to 5.10.0
+F<ppport.h> supports Perl versions from 5.003 to 5.11.5
 in threaded and non-threaded configurations.
 
 =head2 Provided Perl compatibility API
@@ -175,6 +175,7 @@ in older Perl releases:
     grok_oct
     gv_fetchpvn_flags
     gv_fetchpvs
+    gv_fetchsv
     gv_stashpvn
     gv_stashpvs
     GvSVn
@@ -208,7 +209,9 @@ in older Perl releases:
     IVTYPE
     load_module
     memEQ
+    memEQs
     memNE
+    memNEs
     MoveD
     mPUSHi
     mPUSHn
@@ -585,34 +588,74 @@ Perl below which it is unsupported:
 
 =over 4
 
-=item perl 5.11.0
+=item perl 5.11.5
 
-  HeUTF8
   MULTICALL
   PERL_SYS_TERM
   POP_MULTICALL
   PUSH_MULTICALL
+  ref
+  stashpv_hvname_match
+  sv_pos_u2b_flags
+
+=item perl 5.11.4
+
+  prescan_version
+
+=item perl 5.11.2
+
+  PL_keyword_plugin
+  gv_try_downgrade
+  lex_bufutf8
+  lex_discard_to
+  lex_grow_linestr
+  lex_next_chunk
+  lex_peek_unichar
+  lex_read_space
+  lex_read_to
+  lex_read_unichar
+  lex_stuff_pvn
+  lex_stuff_sv
+  lex_unstuff
+  pad_findmy
+
+=item perl 5.11.1
+
+  ck_warner
+  ck_warner_d
+  is_utf8_perl_space
+  is_utf8_perl_word
+  is_utf8_posix_digit
+
+=item perl 5.11.0
+
+  Gv_AMupdate
+  PL_opfreehook
   SvOOK_offset
   av_iter_p
-  croak_xs_usage
   fetch_cop_label
+  gv_add_by_type
   gv_fetchmethod_flags
-  hv_assert
+  is_ascii_string
+  pregfree2
+  save_adelete
+  save_aelem_flags
+  save_hdelete
+  save_helem_flags
+  sv_utf8_upgrade_flags_grow
+
+=item perl 5.10.1
+
+  HeUTF8
+  croak_xs_usage
   mro_get_from_name
   mro_get_private_data
   mro_register
   mro_set_mro
   mro_set_private_data
-  pad_sv
-  pregfree2
-  ref
-  save_adelete
-  save_helem_flags
   save_padsv_and_mortalize
   save_pushptr
-  stashpv_hvname_match
   sv_insert_flags
-  sv_utf8_upgrade_flags_grow
 
 =item perl 5.10.0
 
@@ -625,6 +668,7 @@ Perl below which it is unsupported:
 
 =item perl 5.9.5
 
+  PL_parser
   Perl_signbit
   SvRX
   SvRXOK
@@ -696,7 +740,6 @@ Perl below which it is unsupported:
 
   SvPVbyte_force
   find_rundefsvoffset
-  gv_fetchsv
   op_refcnt_lock
   op_refcnt_unlock
   savesvpv
@@ -911,8 +954,6 @@ Perl below which it is unsupported:
   init_i18nl14n
   is_uni_alnum
   is_uni_alnum_lc
-  is_uni_alnumc
-  is_uni_alnumc_lc
   is_uni_alpha
   is_uni_alpha_lc
   is_uni_ascii
@@ -938,7 +979,6 @@ Perl below which it is unsupported:
   is_uni_xdigit
   is_uni_xdigit_lc
   is_utf8_alnum
-  is_utf8_alnumc
   is_utf8_alpha
   is_utf8_ascii
   is_utf8_char
@@ -1175,7 +1215,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.19 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.19_01 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1262,7 +1302,7 @@ SKIP
 |>=head1 COMPATIBILITY
 |>
 |>This version of F<ppport.h> is designed to support operation with Perl
-|>installations back to 5.003, and has been tested up to 5.10.0.
+|>installations back to 5.003, and has been tested up to 5.11.5.
 |>
 |>=head1 OPTIONS
 |>
@@ -1673,7 +1713,7 @@ Copy|||
 CvPADLIST|||
 CvSTASH|||
 CvWEAKOUTSIDE|||
-DEFSV_set|5.011000||p
+DEFSV_set|5.010001||p
 DEFSV|5.004050||p
 END_EXTERN_C|5.005000||p
 ENTER|||
@@ -1695,7 +1735,7 @@ G_VOID||5.004000|
 GetVars|||
 GvSVn|5.009003||p
 GvSV|||
-Gv_AMupdate|||
+Gv_AMupdate||5.011000|
 HEf_SVKEY||5.004000|
 HeHASH||5.004000|
 HeKEY||5.004000|
@@ -1704,7 +1744,7 @@ HePV||5.004000|
 HeSVKEY_force||5.004000|
 HeSVKEY_set||5.004000|
 HeSVKEY||5.004000|
-HeUTF8||5.011000|
+HeUTF8||5.010001|
 HeVAL||5.004000|
 HvNAMELEN_get|5.009003||p
 HvNAME_get|5.009003||p
@@ -1726,7 +1766,7 @@ IVdf|5.006000||p
 LEAVE|||
 LVRET|||
 MARK|||
-MULTICALL||5.011000|
+MULTICALL||5.011005|
 MY_CXT_CLONE|5.009002||p
 MY_CXT_INIT|5.007003||p
 MY_CXT|5.007003||p
@@ -1767,7 +1807,7 @@ PAD_SV|||
 PERLIO_FUNCS_CAST|5.009003||p
 PERLIO_FUNCS_DECL|5.009003||p
 PERL_ABS|5.008001||p
-PERL_BCDVERSION|5.011000||p
+PERL_BCDVERSION|5.011004||p
 PERL_GCC_BRACE_GROUPS_FORBIDDEN|5.008001||p
 PERL_HASH|5.004000||p
 PERL_INT_MAX|5.004000||p
@@ -1785,10 +1825,10 @@ PERL_MAGIC_envelem|5.007002||p
 PERL_MAGIC_env|5.007002||p
 PERL_MAGIC_ext|5.007002||p
 PERL_MAGIC_fm|5.007002||p
-PERL_MAGIC_glob|5.011000||p
+PERL_MAGIC_glob|5.011004||p
 PERL_MAGIC_isaelem|5.007002||p
 PERL_MAGIC_isa|5.007002||p
-PERL_MAGIC_mutex|5.011000||p
+PERL_MAGIC_mutex|5.011004||p
 PERL_MAGIC_nkeys|5.007002||p
 PERL_MAGIC_overload_elem|5.007002||p
 PERL_MAGIC_overload_table|5.007002||p
@@ -1840,7 +1880,7 @@ PERL_SIGNALS_UNSAFE_FLAG|5.008001||p
 PERL_SUBVERSION|5.006000||p
 PERL_SYS_INIT3||5.006000|
 PERL_SYS_INIT|||
-PERL_SYS_TERM||5.011000|
+PERL_SYS_TERM||5.011005|
 PERL_UCHAR_MAX|5.004000||p
 PERL_UCHAR_MIN|5.004000||p
 PERL_UINT_MAX|5.004000||p
@@ -1862,10 +1902,10 @@ PL_DBsingle|||pn
 PL_DBsub|||pn
 PL_DBtrace|||pn
 PL_Sv|5.005000||p
-PL_bufend|5.011000||p
-PL_bufptr|5.011000||p
+PL_bufend|5.011004||p
+PL_bufptr|5.011004||p
 PL_compiling|5.004050||p
-PL_copline|5.011000||p
+PL_copline|5.011004||p
 PL_curcop|5.004050||p
 PL_curstash|5.004050||p
 PL_debstash|5.004050||p
@@ -1874,22 +1914,24 @@ PL_diehook|5.004050||p
 PL_dirty|5.004050||p
 PL_dowarn|||pn
 PL_errgv|5.004050||p
-PL_error_count|5.011000||p
-PL_expect|5.011000||p
+PL_error_count|5.011004||p
+PL_expect|5.011004||p
 PL_hexdigit|5.005000||p
 PL_hints|5.005000||p
-PL_in_my_stash|5.011000||p
-PL_in_my|5.011000||p
+PL_in_my_stash|5.011004||p
+PL_in_my|5.011004||p
+PL_keyword_plugin||5.011002|
 PL_last_in_gv|||n
 PL_laststatval|5.005000||p
-PL_lex_state|5.011000||p
-PL_lex_stuff|5.011000||p
-PL_linestr|5.011000||p
+PL_lex_state|5.011004||p
+PL_lex_stuff|5.011004||p
+PL_linestr|5.011004||p
 PL_modglobal||5.005000|n
 PL_na|5.004050||pn
 PL_no_modify|5.006000||p
 PL_ofsgv|||n
-PL_parser|5.009005||p
+PL_opfreehook||5.011000|n
+PL_parser|5.009005|5.009005|p
 PL_perl_destruct_level|5.004050||p
 PL_perldb|5.004050||p
 PL_ppaddr|5.006000||p
@@ -1907,8 +1949,8 @@ PL_sv_undef|5.004050||pn
 PL_sv_yes|5.004050||pn
 PL_tainted|5.004050||p
 PL_tainting|5.004050||p
-PL_tokenbuf|5.011000||p
-POP_MULTICALL||5.011000|
+PL_tokenbuf|5.011004||p
+POP_MULTICALL||5.011005|
 POPi|||n
 POPl|||n
 POPn|||n
@@ -1923,7 +1965,7 @@ PTR2nat|5.009003||p
 PTR2ul|5.007001||p
 PTRV|5.006000||p
 PUSHMARK|||
-PUSH_MULTICALL||5.011000|
+PUSH_MULTICALL||5.011005|
 PUSHi|||
 PUSHmortal|5.009002||p
 PUSHn|||
@@ -2139,7 +2181,7 @@ UVuf|5.006000||p
 UVxf|5.006000||p
 WARN_ALL|5.006000||p
 WARN_AMBIGUOUS|5.006000||p
-WARN_ASSERTIONS|5.011000||p
+WARN_ASSERTIONS|5.011004||p
 WARN_BAREWORD|5.006000||p
 WARN_CLOSED|5.006000||p
 WARN_CLOSURE|5.006000||p
@@ -2221,11 +2263,12 @@ _aMY_CXT|5.007003||p
 _pMY_CXT|5.007003||p
 aMY_CXT_|5.007003||p
 aMY_CXT|5.007003||p
-aTHXR_|5.011000||p
-aTHXR|5.011000||p
+aTHXR_|5.011004||p
+aTHXR|5.011004||p
 aTHX_|5.006000||p
 aTHX|5.006000||p
 add_data|||n
+add_utf16_textfilter|||
 addmad|||
 allocmy|||
 amagic_call|||
@@ -2233,6 +2276,7 @@ amagic_cmp_locale|||
 amagic_cmp|||
 amagic_i_ncmp|||
 amagic_ncmp|||
+anonymise_cv|||
 any_dup|||
 ao|||
 append_elem|||
@@ -2334,6 +2378,9 @@ ck_substr|||
 ck_svconst|||
 ck_trunc|||
 ck_unpack|||
+ck_warner_d||5.011001|v
+ck_warner||5.011001|v
+ckwarn_common|||
 ckwarn_d||5.009003|
 ckwarn||5.009003|
 cl_and|||n
@@ -2349,7 +2396,7 @@ cop_free|||
 cr_textfilter|||
 create_eval_scope|||
 croak_nocontext|||vn
-croak_xs_usage||5.011000|
+croak_xs_usage||5.010001|
 croak|||v
 csighandler||5.009003|n
 curmad|||
@@ -2374,7 +2421,7 @@ dNOOP|5.006000||p
 dORIGMARK|||
 dSP|||
 dTHR|5.004050||p
-dTHXR|5.011000||p
+dTHXR|5.011004||p
 dTHXa|5.006000||p
 dTHXoa|5.006000||p
 dTHX|5.006000||p
@@ -2397,9 +2444,8 @@ debug_start_match|||
 deb||5.007003|v
 del_sv|||
 delete_eval_scope|||
-delimcpy||5.004000|
-deprecate_old|||
-deprecate|||
+delimcpy||5.004000|n
+deprecate_commaless_var_list|||
 despatch_signals||5.007001|
 destroy_matcher|||
 die_nocontext|||vn
@@ -2415,6 +2461,7 @@ do_binmode||5.004050|
 do_chomp|||
 do_chop|||
 do_close|||
+do_delete_local|||
 do_dump_pad|||
 do_eof|||
 do_exec3|||
@@ -2478,6 +2525,7 @@ dopoptowhen|||
 doref||5.009003|
 dounwind|||
 dowantarray|||
+dump_all_perl|||
 dump_all||5.006000|
 dump_eval||5.006000|
 dump_exec_pos|||
@@ -2485,7 +2533,9 @@ dump_fds|||
 dump_form||5.006000|
 dump_indent||5.006000|v
 dump_mstats|||
+dump_packsubs_perl|||
 dump_packsubs||5.006000|
+dump_sub_perl|||
 dump_sub||5.006000|
 dump_sv_child|||
 dump_trie_interim_list|||
@@ -2523,6 +2573,7 @@ forbid_setid|||
 force_ident|||
 force_list|||
 force_next|||
+force_strict_version|||
 force_version|||
 force_word|||
 forget_pmop|||
@@ -2573,6 +2624,7 @@ gv_AVadd|||
 gv_HVadd|||
 gv_IOadd|||
 gv_SVadd|||
+gv_add_by_type||5.011000|
 gv_autoload4||5.004000|
 gv_check|||
 gv_const_sv||5.009003|
@@ -2591,7 +2643,7 @@ gv_fetchmeth|||
 gv_fetchpvn_flags|5.009002||p
 gv_fetchpvs|5.009004||p
 gv_fetchpv|||
-gv_fetchsv||5.009002|
+gv_fetchsv|5.009002||p
 gv_fullname3||5.004000|
 gv_fullname4||5.006001|
 gv_fullname|||
@@ -2604,11 +2656,12 @@ gv_stashpvn|5.004000||p
 gv_stashpvs|5.009003||p
 gv_stashpv|||
 gv_stashsv|||
+gv_try_downgrade||5.011002|
 he_dup|||
 hek_dup|||
 hfreeentries|||
 hsplit|||
-hv_assert||5.011000|
+hv_assert|||
 hv_auxinit|||n
 hv_backreferences_p|||
 hv_clear_placeholders||5.009001|
@@ -2652,9 +2705,9 @@ hv_store_flags||5.008000|
 hv_stores|5.009004||p
 hv_store|||
 hv_undef|||
-ibcmp_locale||5.004000|
+ibcmp_locale||5.004000|n
 ibcmp_utf8||5.007003|
-ibcmp|||
+ibcmp|||n
 incline|||
 incpush_if_exists|||
 incpush_use_sep|||
@@ -2673,7 +2726,7 @@ init_postdump_symbols|||
 init_predump_symbols|||
 init_stacks||5.005000|
 init_tm||5.007002|
-instr|||
+instr|||n
 intro_my|||
 intuit_method|||
 intuit_more|||
@@ -2696,13 +2749,13 @@ isSPACE|||
 isUPPER|||
 isXDIGIT|5.006000||p
 is_an_int|||
+is_ascii_string||5.011000|n
 is_gv_magical_sv|||
 is_handle_constructor|||n
+is_inplace_av|||
 is_list_assignment|||
 is_lvalue_sub||5.007001|
 is_uni_alnum_lc||5.006000|
-is_uni_alnumc_lc||5.006000|
-is_uni_alnumc||5.006000|
 is_uni_alnum||5.006000|
 is_uni_alpha_lc||5.006000|
 is_uni_alpha||5.006000|
@@ -2728,12 +2781,21 @@ is_uni_upper_lc||5.006000|
 is_uni_upper||5.006000|
 is_uni_xdigit_lc||5.006000|
 is_uni_xdigit||5.006000|
-is_utf8_alnumc||5.006000|
+is_utf8_X_LVT|||
+is_utf8_X_LV_LVT_V|||
+is_utf8_X_LV|||
+is_utf8_X_L|||
+is_utf8_X_T|||
+is_utf8_X_V|||
+is_utf8_X_begin|||
+is_utf8_X_extend|||
+is_utf8_X_non_hangul|||
+is_utf8_X_prepend|||
 is_utf8_alnum||5.006000|
 is_utf8_alpha||5.006000|
 is_utf8_ascii||5.006000|
 is_utf8_char_slow|||n
-is_utf8_char||5.006000|
+is_utf8_char||5.006000|n
 is_utf8_cntrl||5.006000|
 is_utf8_common|||
 is_utf8_digit||5.006000|
@@ -2742,12 +2804,15 @@ is_utf8_idcont||5.008000|
 is_utf8_idfirst||5.006000|
 is_utf8_lower||5.006000|
 is_utf8_mark||5.006000|
+is_utf8_perl_space||5.011001|
+is_utf8_perl_word||5.011001|
+is_utf8_posix_digit||5.011001|
 is_utf8_print||5.006000|
 is_utf8_punct||5.006000|
 is_utf8_space||5.006000|
-is_utf8_string_loclen||5.009003|
-is_utf8_string_loc||5.008001|
-is_utf8_string||5.006001|
+is_utf8_string_loclen||5.009003|n
+is_utf8_string_loc||5.008001|n
+is_utf8_string||5.006001|n
 is_utf8_upper||5.006000|
 is_utf8_xdigit||5.006000|
 isa_lookup|||
@@ -2755,10 +2820,22 @@ items|||n
 ix|||n
 jmaybe|||
 join_exact|||
+keyword_plugin_standard|||
 keyword|||
 leave_scope|||
+lex_bufutf8||5.011002|
+lex_discard_to||5.011002|
 lex_end|||
+lex_grow_linestr||5.011002|
+lex_next_chunk||5.011002|
+lex_peek_unichar||5.011002|
+lex_read_space||5.011002|
+lex_read_to||5.011002|
+lex_read_unichar||5.011002|
 lex_start|||
+lex_stuff_pvn||5.011002|
+lex_stuff_sv||5.011002|
+lex_unstuff||5.011002|
 linklist|||
 listkids|||
 list|||
@@ -2771,18 +2848,19 @@ lop|||
 mPUSHi|5.009002||p
 mPUSHn|5.009002||p
 mPUSHp|5.009002||p
-mPUSHs|5.011000||p
+mPUSHs|5.010001||p
 mPUSHu|5.009002||p
 mXPUSHi|5.009002||p
 mXPUSHn|5.009002||p
 mXPUSHp|5.009002||p
-mXPUSHs|5.011000||p
+mXPUSHs|5.010001||p
 mXPUSHu|5.009002||p
 mad_free|||
 madlex|||
 madparse|||
 magic_clear_all_env|||
 magic_clearenv|||
+magic_clearhints|||
 magic_clearhint|||
 magic_clearisa|||
 magic_clearpack|||
@@ -2843,7 +2921,9 @@ malloc||5.007002|n
 markstack_grow|||
 matcher_matches_sv|||
 measure_struct|||
+memEQs|5.009005||p
 memEQ|5.004000||p
+memNEs|5.009005||p
 memNE|5.004000||p
 mem_collxfrm|||
 mem_log_common|||n
@@ -2871,17 +2951,17 @@ mod|||
 more_bodies|||
 more_sv|||
 moreswitches|||
-mro_get_from_name||5.011000|
+mro_get_from_name||5.010001|
 mro_get_linear_isa_dfs|||
 mro_get_linear_isa||5.009005|
-mro_get_private_data||5.011000|
+mro_get_private_data||5.010001|
 mro_isa_changed_in|||
 mro_meta_dup|||
 mro_meta_init|||
 mro_method_changed_in||5.009005|
-mro_register||5.011000|
-mro_set_mro||5.011000|
-mro_set_private_data||5.011000|
+mro_register||5.010001|
+mro_set_mro||5.010001|
+mro_set_private_data||5.010001|
 mul128|||
 mulexp10|||n
 my_atof2||5.007002|
@@ -2998,11 +3078,11 @@ newSViv|||
 newSVnv|||
 newSVpvf_nocontext|||vn
 newSVpvf||5.004000|v
-newSVpvn_flags|5.011000||p
+newSVpvn_flags|5.010001||p
 newSVpvn_share|5.007001||p
-newSVpvn_utf8|5.011000||p
+newSVpvn_utf8|5.010001||p
 newSVpvn|5.004050||p
-newSVpvs_flags|5.011000||p
+newSVpvs_flags|5.010001||p
 newSVpvs_share||5.009003|
 newSVpvs|5.009003||p
 newSVpv|||
@@ -3029,7 +3109,7 @@ new_warnings_bitfield|||
 next_symbol|||
 nextargv|||
 nextchar|||
-ninstr|||
+ninstr|||n
 no_bareword_allowed|||
 no_fh_allowed|||
 no_op|||
@@ -3053,6 +3133,7 @@ op_refcnt_lock||5.009002|
 op_refcnt_unlock||5.009002|
 op_xmldump|||
 open_script|||
+opt_scalarhv|||
 pMY_CXT_|5.007003||p
 pMY_CXT|5.007003||p
 pTHX_|5.006000||p
@@ -3060,16 +3141,18 @@ pTHX|5.006000||p
 packWARN|5.007003||p
 pack_cat||5.007003|
 pack_rec|||
+package_version|||
 package|||
 packlist||5.008001|
 pad_add_anon|||
+pad_add_name_sv|||
 pad_add_name|||
 pad_alloc|||
 pad_block_start|||
 pad_check_dup|||
 pad_compname_type|||
 pad_findlex|||
-pad_findmy|||
+pad_findmy||5.011002|
 pad_fixup_inner_anons|||
 pad_free|||
 pad_leavemy|||
@@ -3078,7 +3161,7 @@ pad_peg|||n
 pad_push|||
 pad_reset|||
 pad_setsv|||
-pad_sv||5.011000|
+pad_sv|||
 pad_swipe|||
 pad_tidy|||
 pad_undef|||
@@ -3112,6 +3195,7 @@ pregfree2||5.011000|
 pregfree|||
 prepend_elem|||
 prepend_madprops|||
+prescan_version||5.011004|
 printbuf|||
 printf_nocontext|||vn
 process_special_blocks|||
@@ -3150,7 +3234,7 @@ refcounted_he_new|||
 refcounted_he_value|||
 refkids|||
 refto|||
-ref||5.011000|
+ref||5.011005|
 reg_check_named_buff_matched|||
 reg_named_buff_all||5.009005|
 reg_named_buff_exists||5.009005|
@@ -3201,13 +3285,13 @@ regtry|||
 reguni|||
 regwhite|||n
 reg|||
-repeatcpy|||
+repeatcpy|||n
 report_evil_fh|||
 report_uninit|||
 require_pv||5.006000|
 require_tie_mod|||
 restore_magic|||
-rninstr|||
+rninstr|||n
 rsignal_restore|||
 rsignal_save|||
 rsignal_state||5.004000|
@@ -3229,6 +3313,7 @@ save_I16||5.004000|
 save_I32|||
 save_I8||5.006000|
 save_adelete||5.011000|
+save_aelem_flags||5.011000|
 save_aelem||5.004050|
 save_alloc||5.006000|
 save_aptr|||
@@ -3245,6 +3330,7 @@ save_generic_pvref||5.006001|
 save_generic_svref||5.005030|
 save_gp||5.004000|
 save_hash|||
+save_hdelete||5.011000|
 save_hek_flags|||n
 save_helem_flags||5.011000|
 save_helem||5.004050|
@@ -3260,12 +3346,12 @@ save_magic|||
 save_mortalizesv||5.007001|
 save_nogv|||
 save_op|||
-save_padsv_and_mortalize||5.011000|
+save_padsv_and_mortalize||5.010001|
 save_pptr|||
 save_pushi32ptr|||
 save_pushptri32ptr|||
 save_pushptrptr|||
-save_pushptr||5.011000|
+save_pushptr||5.010001|
 save_re_context||5.006000|
 save_scalar_at|||
 save_scalar|||
@@ -3339,7 +3425,7 @@ stack_grow|||
 start_force|||
 start_glob|||
 start_subparse||5.004000|
-stashpv_hvname_match||5.011000|
+stashpv_hvname_match||5.011005|
 stdize_locale|||
 store_cop_label|||
 strEQ|||
@@ -3426,7 +3512,7 @@ sv_gets||5.004000|
 sv_grow|||
 sv_i_ncmp|||
 sv_inc|||
-sv_insert_flags||5.011000|
+sv_insert_flags||5.010001|
 sv_insert|||
 sv_isa|||
 sv_isobject|||
@@ -3434,7 +3520,7 @@ sv_iv||5.005000|
 sv_kill_backrefs|||
 sv_len_utf8||5.006000|
 sv_len|||
-sv_magic_portable|5.011000|5.004000|p
+sv_magic_portable|5.011005|5.004000|p
 sv_magicext||5.007003|
 sv_magic|||
 sv_mortalcopy|||
@@ -3449,6 +3535,7 @@ sv_peek||5.005000|
 sv_pos_b2u_midway|||
 sv_pos_b2u||5.006000|
 sv_pos_u2b_cached|||
+sv_pos_u2b_flags||5.011005|
 sv_pos_u2b_forwards|||n
 sv_pos_u2b_midway|||n
 sv_pos_u2b||5.006000|
@@ -3527,7 +3614,6 @@ sv_vsetpvf|5.006000|5.004000|p
 sv_xmlpeek|||
 svtype|||
 swallow_bom|||
-swap_match_buff|||
 swash_fetch||5.007002|
 swash_get|||
 swash_init||5.006000|
@@ -3575,6 +3661,7 @@ unwind_handler_stack|||
 update_debugger_info|||
 upg_version||5.009005|
 usage|||
+utf16_textfilter|||
 utf16_to_utf8_reversed||5.006001|
 utf16_to_utf8||5.006001|
 utf8_distance||5.006000|
@@ -3621,12 +3708,15 @@ watch|||
 whichsig|||
 write_no_mem|||
 write_to_stderr|||
+xmldump_all_perl|||
 xmldump_all|||
 xmldump_attr|||
 xmldump_eval|||
 xmldump_form|||
 xmldump_indent|||v
+xmldump_packsubs_perl|||
 xmldump_packsubs|||
+xmldump_sub_perl|||
 xmldump_sub|||
 xmldump_vindent|||
 yyerror|||
@@ -4864,6 +4954,14 @@ __DATA__
 #  define memEQ(s1,s2,l)                 (!bcmp(s1,s2,l))
 #endif
 
+#endif
+#ifndef memEQs
+#  define memEQs(s1, l, s2)              \
+                   (sizeof(s2)-1 == l && memEQ(s1, (s2 ""), (sizeof(s2)-1)))
+#endif
+
+#ifndef memNEs
+#  define memNEs(s1, l, s2)              !memEQs(s1, l, s2)
 #endif
 #ifndef MoveD
 #  define MoveD(s,d,n,t)                 memmove((char*)(d),(char*)(s), (n) * sizeof(t))
@@ -6572,6 +6670,14 @@ DPPP_(my_newSVpvn_share)(pTHX_ const char *src, I32 len, U32 hash)
 #ifndef isGV_with_GP
 #  define isGV_with_GP(gv)               isGV(gv)
 #endif
+
+#ifndef gv_fetchpvn_flags
+#  define gv_fetchpvn_flags(name, len, flags, svt) gv_fetchpv(name, flags, svt)
+#endif
+
+#ifndef gv_fetchsv
+#  define gv_fetchsv(name, flags, svt)   gv_fetchpv(SvPV_nolen_const(name), flags, svt)
+#endif
 #ifndef WARN_ALL
 #  define WARN_ALL                       0
 #endif
@@ -6835,10 +6941,6 @@ DPPP_(my_warner)(U32 err, const char *pat, ...)
 #ifndef hv_stores
 #  define hv_stores(hv, key, val)        hv_store(hv, key "", sizeof(key) - 1, val, 0)
 #endif
-#ifndef gv_fetchpvn_flags
-#  define gv_fetchpvn_flags(name, len, flags, svt) gv_fetchpv(name, flags, svt)
-#endif
-
 #ifndef gv_fetchpvs
 #  define gv_fetchpvs(name, flags, svt)  gv_fetchpvn_flags(name "", sizeof(name) - 1, flags, svt)
 #endif
