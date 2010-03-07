@@ -12,13 +12,13 @@
 #
 ################################################################################
 #
-#  $Revision: 66 $
+#  $Revision: 67 $
 #  $Author: mhx $
-#  $Date: 2010/02/20 19:39:31 +0100 $
+#  $Date: 2010/03/07 13:15:41 +0100 $
 #
 ################################################################################
 #
-#  Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -165,6 +165,8 @@ in older Perl releases:
     G_METHOD
     get_av
     get_cv
+    get_cvn_flags
+    get_cvs
     get_hv
     get_sv
     grok_bin
@@ -240,6 +242,7 @@ in older Perl releases:
     newSVpvn_utf8
     newSVpvs
     newSVpvs_flags
+    newSVpvs_share
     newSVuv
     Newx
     Newxc
@@ -674,7 +677,6 @@ Perl below which it is unsupported:
   SvRXOK
   av_create_and_push
   av_create_and_unshift_one
-  get_cvn_flags
   gv_fetchfile_flags
   mro_get_linear_isa
   mro_method_changed_in
@@ -729,7 +731,6 @@ Perl below which it is unsupported:
   is_utf8_string_loclen
   newGIVENOP
   newSVhek
-  newSVpvs_share
   newWHENOP
   newWHILEOP
   savepvs
@@ -1195,7 +1196,7 @@ Version 3.x was ported back to CPAN by Marcus Holland-Moritz.
 
 =head1 COPYRIGHT
 
-Version 3.x, Copyright (C) 2004-2009, Marcus Holland-Moritz.
+Version 3.x, Copyright (C) 2004-2010, Marcus Holland-Moritz.
 
 Version 2.x, Copyright (C) 2001, Paul Marquess.
 
@@ -1215,7 +1216,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.19_01 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.19_02 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1604,7 +1605,7 @@ SKIP
 |>
 |>=head1 COPYRIGHT
 |>
-|>Version 3.x, Copyright (c) 2004-2009, Marcus Holland-Moritz.
+|>Version 3.x, Copyright (c) 2004-2010, Marcus Holland-Moritz.
 |>
 |>Version 2.x, Copyright (C) 2001, Paul Marquess.
 |>
@@ -2589,7 +2590,8 @@ get_arena|||
 get_aux_mg|||
 get_av|5.006000||p
 get_context||5.006000|n
-get_cvn_flags||5.009005|
+get_cvn_flags|5.009005||p
+get_cvs|5.011000||p
 get_cv|5.006000||p
 get_db_sub|||
 get_debug_opts|||
@@ -3083,7 +3085,7 @@ newSVpvn_share|5.007001||p
 newSVpvn_utf8|5.010001||p
 newSVpvn|5.004050||p
 newSVpvs_flags|5.010001||p
-newSVpvs_share||5.009003|
+newSVpvs_share|5.009003||p
 newSVpvs|5.009003||p
 newSVpv|||
 newSVrv|||
@@ -6618,6 +6620,12 @@ DPPP_(my_sv_setpvf_mg_nocontext)(SV *sv, const char *pat, ...)
    } STMT_END
 #endif
 
+/* Hint: newSVpvn_share
+ * The SVs created by this function only mimic the behaviour of
+ * shared PVs without really being shared. Only use if you know
+ * what you're doing.
+ */
+
 #ifndef newSVpvn_share
 
 #if defined(NEED_newSVpvn_share)
@@ -6677,6 +6685,9 @@ DPPP_(my_newSVpvn_share)(pTHX_ const char *src, I32 len, U32 hash)
 
 #ifndef gv_fetchsv
 #  define gv_fetchsv(name, flags, svt)   gv_fetchpv(SvPV_nolen_const(name), flags, svt)
+#endif
+#ifndef get_cvn_flags
+#  define get_cvn_flags(name, namelen, flags) get_cv(name, flags)
 #endif
 #ifndef WARN_ALL
 #  define WARN_ALL                       0
@@ -6926,6 +6937,10 @@ DPPP_(my_warner)(U32 err, const char *pat, ...)
 #  define newSVpvs_flags(str, flags)     newSVpvn_flags(str "", sizeof(str) - 1, flags)
 #endif
 
+#ifndef newSVpvs_share
+#  define newSVpvs_share(str)            newSVpvn_share(str "", sizeof(str) - 1, 0)
+#endif
+
 #ifndef sv_catpvs
 #  define sv_catpvs(sv, str)             sv_catpvn(sv, str "", sizeof(str) - 1)
 #endif
@@ -6947,6 +6962,9 @@ DPPP_(my_warner)(U32 err, const char *pat, ...)
 
 #ifndef gv_stashpvs
 #  define gv_stashpvs(name, flags)       gv_stashpvn(name "", sizeof(name) - 1, flags)
+#endif
+#ifndef get_cvs
+#  define get_cvs(name, flags)           get_cvn_flags(name "", sizeof(name)-1, flags)
 #endif
 #ifndef SvGETMAGIC
 #  define SvGETMAGIC(x)                  STMT_START { if (SvGMAGICAL(x)) mg_get(x); } STMT_END
