@@ -591,14 +591,152 @@ Perl below which it is unsupported:
 
 =over 4
 
-=item perl 5.11.5
+=item perl 5.14.0
 
+  BhkDISABLE
+  BhkENABLE
+  BhkENTRY_set
   MULTICALL
   PERL_SYS_TERM
   POP_MULTICALL
   PUSH_MULTICALL
+  XopDISABLE
+  XopENABLE
+  XopENTRY
+  XopENTRY_set
+  cophh_new_empty
+  my_lstat
+  my_stat
   ref
   stashpv_hvname_match
+
+=item perl 5.13.10
+
+  foldEQ_utf8_flags
+  is_utf8_xidcont
+  is_utf8_xidfirst
+
+=item perl 5.13.8
+
+  foldEQ_latin1
+  mg_findext
+  parse_arithexpr
+  parse_fullexpr
+  parse_listexpr
+  parse_termexpr
+  sv_unmagicext
+
+=item perl 5.13.7
+
+  HvENAME
+  OP_CLASS
+  SvPV_nomg_nolen
+  XopFLAGS
+  amagic_deref_call
+  bytes_cmp_utf8
+  cop_hints_2hv
+  cop_hints_fetch_pv
+  cop_hints_fetch_pvn
+  cop_hints_fetch_pvs
+  cop_hints_fetch_sv
+  cophh_2hv
+  cophh_copy
+  cophh_delete_pv
+  cophh_delete_pvn
+  cophh_delete_pvs
+  cophh_delete_sv
+  cophh_fetch_pv
+  cophh_fetch_pvn
+  cophh_fetch_pvs
+  cophh_fetch_sv
+  cophh_free
+  cophh_store_pv
+  cophh_store_pvn
+  cophh_store_pvs
+  cophh_store_sv
+  custom_op_register
+  custom_op_xop
+  newFOROP
+  newWHILEOP
+  op_lvalue
+  op_scope
+  parse_barestmt
+  parse_block
+  parse_label
+
+=item perl 5.13.6
+
+  LINKLIST
+  SvTRUE_nomg
+  ck_entersub_args_list
+  ck_entersub_args_proto
+  ck_entersub_args_proto_or_list
+  cv_get_call_checker
+  cv_set_call_checker
+  isWORDCHAR
+  lex_stuff_pv
+  mg_free_type
+  newSVpv_share
+  op_append_elem
+  op_append_list
+  op_contextualize
+  op_linklist
+  op_prepend_elem
+  parse_stmtseq
+  rv2cv_op_cv
+  savesharedpvs
+  savesharedsvpv
+  sv_2bool_flags
+  sv_catpv_flags
+  sv_catpv_nomg
+  sv_catpvs_flags
+  sv_catpvs_mg
+  sv_catpvs_nomg
+  sv_cmp_flags
+  sv_cmp_locale_flags
+  sv_collxfrm_flags
+  sv_eq_flags
+  sv_setpvs_mg
+  sv_setref_pvs
+
+=item perl 5.13.5
+
+  PL_rpeepp
+  caller_cx
+  isOCTAL
+  lex_stuff_pvs
+  parse_fullstmt
+
+=item perl 5.13.4
+
+  XS_APIVERSION_BOOTCHECK
+
+=item perl 5.13.3
+
+  blockhook_register
+  croak_no_modify
+
+=item perl 5.13.2
+
+  SvNV_nomg
+  find_rundefsv
+  foldEQ
+  foldEQ_locale
+  foldEQ_utf8
+  hv_fill
+  sv_dec_nomg
+  sv_inc_nomg
+
+=item perl 5.13.1
+
+  croak_sv
+  die_sv
+  mess_sv
+  sv_2nv_flags
+  warn_sv
+
+=item perl 5.11.5
+
   sv_pos_u2b_flags
 
 =item perl 5.11.4
@@ -608,7 +746,6 @@ Perl below which it is unsupported:
 =item perl 5.11.2
 
   PL_keyword_plugin
-  gv_try_downgrade
   lex_bufutf8
   lex_discard_to
   lex_grow_linestr
@@ -656,8 +793,11 @@ Perl below which it is unsupported:
   mro_register
   mro_set_mro
   mro_set_private_data
+  save_hints
   save_padsv_and_mortalize
+  save_pushi32ptr
   save_pushptr
+  save_pushptrptr
   sv_insert_flags
 
 =item perl 5.10.0
@@ -678,6 +818,7 @@ Perl below which it is unsupported:
   av_create_and_push
   av_create_and_unshift_one
   gv_fetchfile_flags
+  lex_start
   mro_get_linear_isa
   mro_method_changed_in
   my_dirfd
@@ -705,6 +846,7 @@ Perl below which it is unsupported:
 
   PerlIO_context_layers
   gv_name_set
+  hv_copy_hints_hv
   my_vsnprintf
   newXS_flags
   regclass_swash
@@ -732,7 +874,6 @@ Perl below which it is unsupported:
   newGIVENOP
   newSVhek
   newWHENOP
-  newWHILEOP
   savepvs
   sortsv_flags
   vverify
@@ -792,6 +933,9 @@ Perl below which it is unsupported:
 
 =item perl 5.7.3
 
+  OP_DESC
+  OP_NAME
+  PL_peepp
   PerlIO_clearerr
   PerlIO_close
   PerlIO_eof
@@ -1084,6 +1228,7 @@ Perl below which it is unsupported:
   runops_debug
   runops_standard
   save_iv
+  save_op
   screaminstr
   sv_iv
   sv_nv
@@ -1216,7 +1361,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.19_02 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.19_03 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -1694,6 +1839,12 @@ my %API = map { /^(\w+)\|([^|]*)\|([^|]*)\|(\w*)$/
                 : die "invalid spec: $_" } qw(
 AvFILLp|5.004050||p
 AvFILL|||
+BhkDISABLE||5.014000|
+BhkENABLE||5.014000|
+BhkENTRY_set||5.014000|
+BhkENTRY|||
+BhkFLAGS|||
+CALL_BLOCK_HOOKS|||
 CLASS|||n
 CPERLscope|5.005000||p
 CX_CURPAD_SAVE|||
@@ -1747,6 +1898,7 @@ HeSVKEY_set||5.004000|
 HeSVKEY||5.004000|
 HeUTF8||5.010001|
 HeVAL||5.004000|
+HvENAME||5.013007|
 HvNAMELEN_get|5.009003||p
 HvNAME_get|5.009003||p
 HvNAME|||
@@ -1765,9 +1917,10 @@ IVSIZE|5.006000||p
 IVTYPE|5.006000||p
 IVdf|5.006000||p
 LEAVE|||
+LINKLIST||5.013006|
 LVRET|||
 MARK|||
-MULTICALL||5.011005|
+MULTICALL||5.014000|
 MY_CXT_CLONE|5.009002||p
 MY_CXT_INIT|5.007003||p
 MY_CXT|5.007003||p
@@ -1787,6 +1940,9 @@ Nullch|||
 Nullcv|||
 Nullhv|||
 Nullsv|||
+OP_CLASS||5.013007|
+OP_DESC||5.007003|
+OP_NAME||5.007003|
 ORIGMARK|||
 PAD_BASE_SV|||
 PAD_CLONE_VARS|||
@@ -1808,7 +1964,7 @@ PAD_SV|||
 PERLIO_FUNCS_CAST|5.009003||p
 PERLIO_FUNCS_DECL|5.009003||p
 PERL_ABS|5.008001||p
-PERL_BCDVERSION|5.011004||p
+PERL_BCDVERSION|5.014000||p
 PERL_GCC_BRACE_GROUPS_FORBIDDEN|5.008001||p
 PERL_HASH|5.004000||p
 PERL_INT_MAX|5.004000||p
@@ -1826,10 +1982,10 @@ PERL_MAGIC_envelem|5.007002||p
 PERL_MAGIC_env|5.007002||p
 PERL_MAGIC_ext|5.007002||p
 PERL_MAGIC_fm|5.007002||p
-PERL_MAGIC_glob|5.011004||p
+PERL_MAGIC_glob|5.014000||p
 PERL_MAGIC_isaelem|5.007002||p
 PERL_MAGIC_isa|5.007002||p
-PERL_MAGIC_mutex|5.011004||p
+PERL_MAGIC_mutex|5.014000||p
 PERL_MAGIC_nkeys|5.007002||p
 PERL_MAGIC_overload_elem|5.007002||p
 PERL_MAGIC_overload_table|5.007002||p
@@ -1881,7 +2037,7 @@ PERL_SIGNALS_UNSAFE_FLAG|5.008001||p
 PERL_SUBVERSION|5.006000||p
 PERL_SYS_INIT3||5.006000|
 PERL_SYS_INIT|||
-PERL_SYS_TERM||5.011005|
+PERL_SYS_TERM||5.014000|
 PERL_UCHAR_MAX|5.004000||p
 PERL_UCHAR_MIN|5.004000||p
 PERL_UINT_MAX|5.004000||p
@@ -1903,10 +2059,10 @@ PL_DBsingle|||pn
 PL_DBsub|||pn
 PL_DBtrace|||pn
 PL_Sv|5.005000||p
-PL_bufend|5.011004||p
-PL_bufptr|5.011004||p
+PL_bufend|5.014000||p
+PL_bufptr|5.014000||p
 PL_compiling|5.004050||p
-PL_copline|5.011004||p
+PL_copline|5.014000||p
 PL_curcop|5.004050||p
 PL_curstash|5.004050||p
 PL_debstash|5.004050||p
@@ -1915,29 +2071,31 @@ PL_diehook|5.004050||p
 PL_dirty|5.004050||p
 PL_dowarn|||pn
 PL_errgv|5.004050||p
-PL_error_count|5.011004||p
-PL_expect|5.011004||p
+PL_error_count|5.014000||p
+PL_expect|5.014000||p
 PL_hexdigit|5.005000||p
 PL_hints|5.005000||p
-PL_in_my_stash|5.011004||p
-PL_in_my|5.011004||p
+PL_in_my_stash|5.014000||p
+PL_in_my|5.014000||p
 PL_keyword_plugin||5.011002|
 PL_last_in_gv|||n
 PL_laststatval|5.005000||p
-PL_lex_state|5.011004||p
-PL_lex_stuff|5.011004||p
-PL_linestr|5.011004||p
+PL_lex_state|5.014000||p
+PL_lex_stuff|5.014000||p
+PL_linestr|5.014000||p
 PL_modglobal||5.005000|n
 PL_na|5.004050||pn
 PL_no_modify|5.006000||p
 PL_ofsgv|||n
 PL_opfreehook||5.011000|n
 PL_parser|5.009005|5.009005|p
+PL_peepp||5.007003|n
 PL_perl_destruct_level|5.004050||p
 PL_perldb|5.004050||p
 PL_ppaddr|5.006000||p
-PL_rsfp_filters|5.004050||p
-PL_rsfp|5.004050||p
+PL_rpeepp||5.013005|n
+PL_rsfp_filters|5.014000||p
+PL_rsfp|5.014000||p
 PL_rs|||n
 PL_signals|5.008001||p
 PL_stack_base|5.004050||p
@@ -1950,8 +2108,8 @@ PL_sv_undef|5.004050||pn
 PL_sv_yes|5.004050||pn
 PL_tainted|5.004050||p
 PL_tainting|5.004050||p
-PL_tokenbuf|5.011004||p
-POP_MULTICALL||5.011005|
+PL_tokenbuf|5.014000||p
+POP_MULTICALL||5.014000|
 POPi|||n
 POPl|||n
 POPn|||n
@@ -1966,7 +2124,7 @@ PTR2nat|5.009003||p
 PTR2ul|5.007001||p
 PTRV|5.006000||p
 PUSHMARK|||
-PUSH_MULTICALL||5.011005|
+PUSH_MULTICALL||5.014000|
 PUSHi|||
 PUSHmortal|5.009002||p
 PUSHn|||
@@ -2077,6 +2235,7 @@ SvNOK_on|||
 SvNOKp|||
 SvNOK|||
 SvNVX|||
+SvNV_nomg||5.013002|
 SvNV_set|||
 SvNVx|||
 SvNV|||
@@ -2110,6 +2269,7 @@ SvPV_nolen_const|5.009003||p
 SvPV_nolen|5.006000||p
 SvPV_nomg_const_nolen|5.009003||p
 SvPV_nomg_const|5.009003||p
+SvPV_nomg_nolen||5.013007|
 SvPV_nomg|5.007002||p
 SvPV_renew|5.009003||p
 SvPV_set|||
@@ -2155,6 +2315,7 @@ SvTAINTED_off||5.004000|
 SvTAINTED_on||5.004000|
 SvTAINTED||5.004000|
 SvTAINT|||
+SvTRUE_nomg||5.013006|
 SvTRUE|||
 SvTYPE|||
 SvUNLOCK||5.007003|
@@ -2182,7 +2343,7 @@ UVuf|5.006000||p
 UVxf|5.006000||p
 WARN_ALL|5.006000||p
 WARN_AMBIGUOUS|5.006000||p
-WARN_ASSERTIONS|5.011004||p
+WARN_ASSERTIONS|5.014000||p
 WARN_BAREWORD|5.006000||p
 WARN_CLOSED|5.006000||p
 WARN_CLOSURE|5.006000||p
@@ -2254,39 +2415,52 @@ XST_mPV|||
 XST_mUNDEF|||
 XST_mUV|5.008001||p
 XST_mYES|||
+XS_APIVERSION_BOOTCHECK||5.013004|
 XS_VERSION_BOOTCHECK|||
 XS_VERSION|||
 XSprePUSH|5.006000||p
 XS|||
+XopDISABLE||5.014000|
+XopENABLE||5.014000|
+XopENTRY_set||5.014000|
+XopENTRY||5.014000|
+XopFLAGS||5.013007|
 ZeroD|5.009002||p
 Zero|||
 _aMY_CXT|5.007003||p
+_append_range_to_invlist|||
+_new_invlist|||
 _pMY_CXT|5.007003||p
+_swash_inversion_hash|||
+_swash_to_invlist|||
 aMY_CXT_|5.007003||p
 aMY_CXT|5.007003||p
-aTHXR_|5.011004||p
-aTHXR|5.011004||p
+aTHXR_|5.014000||p
+aTHXR|5.014000||p
 aTHX_|5.006000||p
 aTHX|5.006000||p
+add_alternate|||
+add_cp_to_invlist|||
 add_data|||n
+add_range_to_invlist|||
 add_utf16_textfilter|||
 addmad|||
 allocmy|||
 amagic_call|||
 amagic_cmp_locale|||
 amagic_cmp|||
+amagic_deref_call||5.013007|
 amagic_i_ncmp|||
 amagic_ncmp|||
-anonymise_cv|||
+anonymise_cv_maybe|||
 any_dup|||
 ao|||
-append_elem|||
-append_list|||
 append_madprops|||
 apply_attrs_my|||
 apply_attrs_string||5.006001|
 apply_attrs|||
 apply|||
+assert_uft8_cache_coherent|||
 atfork_lock||5.007003|n
 atfork_unlock||5.007003|n
 av_arylen_p||5.009003|
@@ -2314,10 +2488,12 @@ bind_match|||
 block_end|||
 block_gimme||5.004000|
 block_start|||
+blockhook_register||5.013003|
 boolSV|5.004000||p
 boot_core_PerlIO|||
 boot_core_UNIVERSAL|||
 boot_core_mro|||
+bytes_cmp_utf8||5.013007|
 bytes_from_utf8||5.007001|
 bytes_to_uni|||n
 bytes_to_utf8||5.006001|
@@ -2327,6 +2503,7 @@ call_list||5.004000|
 call_method|5.006000||p
 call_pv|5.006000||p
 call_sv|5.006000||p
+caller_cx||5.013005|
 calloc||5.007002|n
 cando|||
 cast_i32||5.006000|
@@ -2335,50 +2512,13 @@ cast_ulong||5.006000|
 cast_uv||5.006000|
 check_type_and_open|||
 check_uni|||
+check_utf8_print|||
 checkcomma|||
 checkposixcc|||
 ckWARN|5.006000||p
-ck_anoncode|||
-ck_bitop|||
-ck_concat|||
-ck_defined|||
-ck_delete|||
-ck_die|||
-ck_each|||
-ck_eof|||
-ck_eval|||
-ck_exec|||
-ck_exists|||
-ck_exit|||
-ck_ftst|||
-ck_fun|||
-ck_glob|||
-ck_grep|||
-ck_index|||
-ck_join|||
-ck_lfun|||
-ck_listiob|||
-ck_match|||
-ck_method|||
-ck_null|||
-ck_open|||
-ck_readline|||
-ck_repeat|||
-ck_require|||
-ck_return|||
-ck_rfun|||
-ck_rvconst|||
-ck_sassign|||
-ck_select|||
-ck_shift|||
-ck_sort|||
-ck_spair|||
-ck_split|||
-ck_subr|||
-ck_substr|||
-ck_svconst|||
-ck_trunc|||
-ck_unpack|||
+ck_entersub_args_list||5.013006|
+ck_entersub_args_proto_or_list||5.013006|
+ck_entersub_args_proto||5.013006|
 ck_warner_d||5.011001|v
 ck_warner||5.011001|v
 ckwarn_common|||
@@ -2386,28 +2526,59 @@ ckwarn_d||5.009003|
 ckwarn||5.009003|
 cl_and|||n
 cl_anything|||n
-cl_init_zero|||n
 cl_init|||n
 cl_is_anything|||n
 cl_or|||n
 clear_placeholders|||
+clone_params_del|||n
+clone_params_new|||n
 closest_cop|||
 convert|||
 cop_free|||
+cop_hints_2hv||5.013007|
+cop_hints_fetch_pvn||5.013007|
+cop_hints_fetch_pvs||5.013007|
+cop_hints_fetch_pv||5.013007|
+cop_hints_fetch_sv||5.013007|
+cophh_2hv||5.013007|
+cophh_copy||5.013007|
+cophh_delete_pvn||5.013007|
+cophh_delete_pvs||5.013007|
+cophh_delete_pv||5.013007|
+cophh_delete_sv||5.013007|
+cophh_fetch_pvn||5.013007|
+cophh_fetch_pvs||5.013007|
+cophh_fetch_pv||5.013007|
+cophh_fetch_sv||5.013007|
+cophh_free||5.013007|
+cophh_new_empty||5.014000|
+cophh_store_pvn||5.013007|
+cophh_store_pvs||5.013007|
+cophh_store_pv||5.013007|
+cophh_store_sv||5.013007|
 cr_textfilter|||
 create_eval_scope|||
+croak_no_modify||5.013003|
 croak_nocontext|||vn
+croak_sv||5.013001|
 croak_xs_usage||5.010001|
 croak|||v
 csighandler||5.009003|n
 curmad|||
+curse|||
 custom_op_desc||5.007003|
 custom_op_name||5.007003|
+custom_op_register||5.013007|
+custom_op_xop||5.013007|
 cv_ckproto_len|||
 cv_clone|||
 cv_const_sv||5.004000|
 cv_dump|||
+cv_get_call_checker||5.013006|
+cv_set_call_checker||5.013006|
 cv_undef|||
+cvgv_set|||
+cvstash_set|||
 cx_dump||5.005000|
 cx_dup|||
 cxinc|||
@@ -2422,7 +2593,7 @@ dNOOP|5.006000||p
 dORIGMARK|||
 dSP|||
 dTHR|5.004050||p
-dTHXR|5.011004||p
+dTHXR|5.014000||p
 dTHXa|5.006000||p
 dTHXoa|5.006000||p
 dTHX|5.006000||p
@@ -2450,7 +2621,8 @@ deprecate_commaless_var_list|||
 despatch_signals||5.007001|
 destroy_matcher|||
 die_nocontext|||vn
-die_where|||
+die_sv||5.013001|
+die_unwind|||
 die|||v
 dirp_dup|||
 div128|||
@@ -2460,7 +2632,6 @@ do_aexec|||
 do_aspawn|||
 do_binmode||5.004050|
 do_chomp|||
-do_chop|||
 do_close|||
 do_delete_local|||
 do_dump_pad|||
@@ -2474,7 +2645,6 @@ do_hv_dump||5.006000|
 do_ipcctl|||
 do_ipcget|||
 do_join|||
-do_kv|||
 do_magic_dump||5.006000|
 do_msgrcv|||
 do_msgsnd|||
@@ -2566,9 +2736,15 @@ find_hash_subscript|||
 find_in_my_stash|||
 find_runcv||5.008001|
 find_rundefsvoffset||5.009002|
+find_rundefsv||5.013002|
 find_script|||
 find_uninit_var|||
 first_symbol|||n
+foldEQ_latin1||5.013008|n
+foldEQ_locale||5.013002|n
+foldEQ_utf8_flags||5.013010|
+foldEQ_utf8||5.013002|
+foldEQ||5.013002|n
 fold_constants|||
 forbid_setid|||
 force_ident|||
@@ -2586,7 +2762,6 @@ free_global_struct|||
 free_tied_hv_pool|||
 free_tmps|||
 gen_constant_list|||
-get_arena|||
 get_aux_mg|||
 get_av|5.006000||p
 get_context||5.006000|n
@@ -2597,7 +2772,6 @@ get_db_sub|||
 get_debug_opts|||
 get_hash_seed|||
 get_hv|5.006000||p
-get_isa_hash|||
 get_mstats|||
 get_no_modify|||
 get_num|||
@@ -2617,6 +2791,8 @@ gp_dup|||
 gp_free|||
 gp_ref|||
 grok_bin|5.007003||p
+grok_bslash_c|||
+grok_bslash_o|||
 grok_hex|5.007003||p
 grok_number|5.007002||p
 grok_numeric_radix|5.007002||p
@@ -2653,12 +2829,14 @@ gv_get_super_pkg|||
 gv_handler||5.007001|
 gv_init_sv|||
 gv_init|||
+gv_magicalize_isa|||
+gv_magicalize_overload|||
 gv_name_set||5.009004|
 gv_stashpvn|5.004000||p
 gv_stashpvs|5.009003||p
 gv_stashpv|||
 gv_stashsv|||
-gv_try_downgrade||5.011002|
+gv_try_downgrade|||
 he_dup|||
 hek_dup|||
 hfreeentries|||
@@ -2670,18 +2848,21 @@ hv_clear_placeholders||5.009001|
 hv_clear|||
 hv_common_key_len||5.010000|
 hv_common||5.010000|
-hv_copy_hints_hv|||
+hv_copy_hints_hv||5.009004|
 hv_delayfree_ent||5.004000|
 hv_delete_common|||
 hv_delete_ent||5.004000|
 hv_delete|||
 hv_eiter_p||5.009003|
 hv_eiter_set||5.009003|
+hv_ename_add|||
+hv_ename_delete|||
 hv_exists_ent||5.004000|
 hv_exists|||
 hv_fetch_ent||5.004000|
 hv_fetchs|5.009003||p
 hv_fetch|||
+hv_fill||5.013002|
 hv_free_ent||5.004000|
 hv_iterinit|||
 hv_iterkeysv||5.004000|
@@ -2706,16 +2887,18 @@ hv_store_ent||5.004000|
 hv_store_flags||5.008000|
 hv_stores|5.009004||p
 hv_store|||
+hv_undef_flags|||
 hv_undef|||
-ibcmp_locale||5.004000|n
+ibcmp_locale||5.004000|
 ibcmp_utf8||5.007003|
-ibcmp|||n
+ibcmp|||
 incline|||
 incpush_if_exists|||
 incpush_use_sep|||
 incpush|||
 ingroup|||
 init_argv_symbols|||
+init_dbargs|||
 init_debugger|||
 init_global_struct|||
 init_i18nl10n||5.006000|
@@ -2733,9 +2916,20 @@ intro_my|||
 intuit_method|||
 intuit_more|||
 invert|||
+invlist_array|||
+invlist_destroy|||
+invlist_extend|||
+invlist_intersection|||
+invlist_len|||
+invlist_max|||
+invlist_set_array|||
+invlist_set_len|||
+invlist_set_max|||
+invlist_trim|||
+invlist_union|||
+invoke_exception_hook|||
 io_close|||
 isALNUMC|5.006000||p
-isALNUM|||
 isALPHA|||
 isASCII|5.006000||p
 isBLANK|5.006001||p
@@ -2744,11 +2938,13 @@ isDIGIT|||
 isGRAPH|5.006000||p
 isGV_with_GP|5.009004||p
 isLOWER|||
+isOCTAL||5.013005|
 isPRINT|5.004000||p
 isPSXSPC|5.006001||p
 isPUNCT|5.006000||p
 isSPACE|||
 isUPPER|||
+isWORDCHAR||5.013006|
 isXDIGIT|5.006000||p
 is_an_int|||
 is_ascii_string||5.011000|n
@@ -2817,6 +3013,8 @@ is_utf8_string_loc||5.008001|n
 is_utf8_string||5.006001|n
 is_utf8_upper||5.006000|
 is_utf8_xdigit||5.006000|
+is_utf8_xidcont||5.013010|
+is_utf8_xidfirst||5.013010|
 isa_lookup|||
 items|||n
 ix|||n
@@ -2827,18 +3025,18 @@ keyword|||
 leave_scope|||
 lex_bufutf8||5.011002|
 lex_discard_to||5.011002|
-lex_end|||
 lex_grow_linestr||5.011002|
 lex_next_chunk||5.011002|
 lex_peek_unichar||5.011002|
 lex_read_space||5.011002|
 lex_read_to||5.011002|
 lex_read_unichar||5.011002|
-lex_start|||
+lex_start||5.009005|
 lex_stuff_pvn||5.011002|
+lex_stuff_pvs||5.013005|
+lex_stuff_pv||5.013006|
 lex_stuff_sv||5.011002|
 lex_unstuff||5.011002|
-linklist|||
 listkids|||
 list|||
 load_module_nocontext|||vn
@@ -2884,7 +3082,8 @@ magic_getvec|||
 magic_get|||
 magic_killbackrefs|||
 magic_len|||
-magic_methcall|||
+magic_methcall1|||
+magic_methcall|||v
 magic_methpack|||
 magic_nextpack|||
 magic_regdata_cnt|||
@@ -2931,13 +3130,16 @@ mem_collxfrm|||
 mem_log_common|||n
 mess_alloc|||
 mess_nocontext|||vn
+mess_sv||5.013001|
 mess||5.006000|v
 method_common|||
 mfree||5.007002|n
 mg_clear|||
 mg_copy|||
 mg_dup|||
+mg_findext||5.013008|
 mg_find|||
+mg_free_type||5.013006|
 mg_free|||
 mg_get|||
 mg_length||5.005000|
@@ -2953,6 +3155,8 @@ mod|||
 more_bodies|||
 more_sv|||
 moreswitches|||
+mro_clean_isarev|||
+mro_gather_and_rename|||
 mro_get_from_name||5.010001|
 mro_get_linear_isa_dfs|||
 mro_get_linear_isa||5.009005|
@@ -2961,11 +3165,13 @@ mro_isa_changed_in|||
 mro_meta_dup|||
 mro_meta_init|||
 mro_method_changed_in||5.009005|
+mro_package_moved|||
 mro_register||5.010001|
 mro_set_mro||5.010001|
 mro_set_private_data||5.010001|
 mul128|||
 mulexp10|||n
+munge_qwlist_to_paren_list|||
 my_atof2||5.007002|
 my_atof||5.006000|
 my_attrs|||
@@ -3007,7 +3213,8 @@ my_letoh64|||n
 my_letohi|||n
 my_letohl|||n
 my_letohs|||n
-my_lstat|||
+my_lstat_flags|||
+my_lstat||5.014000|
 my_memcmp||5.004000|n
 my_memset|||n
 my_ntohl|||
@@ -3018,7 +3225,8 @@ my_setenv|||
 my_snprintf|5.009004||pvn
 my_socketpair||5.007003|n
 my_sprintf|5.009003||pvn
-my_stat|||
+my_stat_flags|||
+my_stat||5.014000|
 my_strftime||5.007002|
 my_strlcat|5.009004||pn
 my_strlcpy|5.009004||pn
@@ -3041,7 +3249,7 @@ newCONSTSUB|5.004050||p
 newCVREF|||
 newDEFSVOP|||
 newFORM|||
-newFOROP|||
+newFOROP||5.013007|
 newGIVENOP||5.009003|
 newGIVWHENOP|||
 newGP|||
@@ -3078,6 +3286,7 @@ newSV_type|5.009005||p
 newSVhek||5.009003|
 newSViv|||
 newSVnv|||
+newSVpv_share||5.013006|
 newSVpvf_nocontext|||vn
 newSVpvf||5.004000|v
 newSVpvn_flags|5.010001||p
@@ -3095,7 +3304,7 @@ newSV|||
 newTOKEN|||
 newUNOP|||
 newWHENOP||5.009003|
-newWHILEOP||5.009003|
+newWHILEOP||5.013007|
 newXS_flags||5.009004|
 newXSproto||5.006000|
 newXS||5.006000|
@@ -3119,20 +3328,26 @@ not_a_number|||
 nothreadhook||5.008000|
 nuke_stacks|||
 num_overflow|||n
-offer_nice_chunk|||
 oopsAV|||
 oopsHV|||
+op_append_elem||5.013006|
+op_append_list||5.013006|
 op_clear|||
 op_const_sv|||
+op_contextualize||5.013006|
 op_dump||5.006000|
 op_free|||
 op_getmad_weak|||
 op_getmad|||
+op_linklist||5.013006|
+op_lvalue||5.013007|
 op_null||5.007002|
+op_prepend_elem||5.013006|
 op_refcnt_dec|||
 op_refcnt_inc|||
 op_refcnt_lock||5.009002|
 op_refcnt_unlock||5.009002|
+op_scope||5.013007|
 op_xmldump|||
 open_script|||
 opt_scalarhv|||
@@ -3166,8 +3381,17 @@ pad_setsv|||
 pad_sv|||
 pad_swipe|||
 pad_tidy|||
-pad_undef|||
+padlist_dup|||
+parse_arithexpr||5.013008|
+parse_barestmt||5.013007|
+parse_block||5.013007|
 parse_body|||
+parse_fullexpr||5.013008|
+parse_fullstmt||5.013005|
+parse_label||5.013007|
+parse_listexpr||5.013008|
+parse_stmtseq||5.013006|
+parse_termexpr||5.013008|
 parse_unicode_opts|||
 parser_dup|||
 parser_free|||
@@ -3185,17 +3409,16 @@ perl_parse||5.006000|n
 perl_run|||n
 pidgone|||
 pm_description|||
-pmflag|||
 pmop_dump||5.006000|
 pmop_xmldump|||
 pmruntime|||
 pmtrans|||
 pop_scope|||
+populate_isa|||v
 pregcomp||5.009005|
 pregexec|||
 pregfree2||5.011000|
 pregfree|||
-prepend_elem|||
 prepend_madprops|||
 prescan_version||5.011004|
 printbuf|||
@@ -3229,14 +3452,20 @@ reentrant_retry|||vn
 reentrant_size|||
 ref_array_or_hash|||
 refcounted_he_chain_2hv|||
-refcounted_he_fetch|||
+refcounted_he_fetch_pvn|||
+refcounted_he_fetch_pvs|||
+refcounted_he_fetch_pv|||
+refcounted_he_fetch_sv|||
 refcounted_he_free|||
-refcounted_he_new_common|||
-refcounted_he_new|||
+refcounted_he_inc|||
+refcounted_he_new_pvn|||
+refcounted_he_new_pvs|||
+refcounted_he_new_pv|||
+refcounted_he_new_sv|||
 refcounted_he_value|||
 refkids|||
 refto|||
-ref||5.011005|
+ref||5.014000|
 reg_check_named_buff_matched|||
 reg_named_buff_all||5.009005|
 reg_named_buff_exists||5.009005|
@@ -3263,7 +3492,7 @@ regclass_swash||5.009004|
 regclass|||
 regcppop|||
 regcppush|||
-regcurly|||n
+regcurly|||
 regdump_extflags|||
 regdump||5.005000|
 regdupe_internal|||
@@ -3290,10 +3519,12 @@ reg|||
 repeatcpy|||n
 report_evil_fh|||
 report_uninit|||
+report_wrongway_fh|||
 require_pv||5.006000|
 require_tie_mod|||
 restore_magic|||
 rninstr|||n
+rpeep|||
 rsignal_restore|||
 rsignal_save|||
 rsignal_state||5.004000|
@@ -3302,6 +3533,7 @@ run_body|||
 run_user_filter|||
 runops_debug||5.005000|
 runops_standard||5.005000|
+rv2cv_op_cv||5.013006|
 rvpv_dup|||
 rxres_free|||
 rxres_restore|||
@@ -3336,7 +3568,7 @@ save_hdelete||5.011000|
 save_hek_flags|||n
 save_helem_flags||5.011000|
 save_helem||5.004050|
-save_hints|||
+save_hints||5.010001|
 save_hptr|||
 save_int|||
 save_item|||
@@ -3347,12 +3579,12 @@ save_long|||
 save_magic|||
 save_mortalizesv||5.007001|
 save_nogv|||
-save_op|||
+save_op||5.005000|
 save_padsv_and_mortalize||5.010001|
 save_pptr|||
-save_pushi32ptr|||
+save_pushi32ptr||5.010001|
 save_pushptri32ptr|||
-save_pushptrptr|||
+save_pushptrptr||5.010001|
 save_pushptr||5.010001|
 save_re_context||5.006000|
 save_scalar_at|||
@@ -3366,7 +3598,9 @@ savepvn|||
 savepvs||5.009003|
 savepv|||
 savesharedpvn||5.009005|
+savesharedpvs||5.013006|
 savesharedpv||5.007003|
+savesharedsvpv||5.013006|
 savestack_grow_cnt||5.008001|
 savestack_grow|||
 savesvpv||5.009002|
@@ -3394,7 +3628,6 @@ scan_trans|||
 scan_version||5.009001|
 scan_vstring||5.009005|
 scan_word|||
-scope|||
 screaminstr||5.005000|
 search_const|||
 seed||5.008001|
@@ -3405,6 +3638,8 @@ set_context||5.006000|n
 set_numeric_local||5.006000|
 set_numeric_radix||5.006000|
 set_numeric_standard||5.006000|
+set_regclass_bit_fold|||
+set_regclass_bit|||
 setdefout|||
 share_hek_flags|||
 share_hek||5.004000|
@@ -3427,7 +3662,7 @@ stack_grow|||
 start_force|||
 start_glob|||
 start_subparse||5.004000|
-stashpv_hvname_match||5.011005|
+stashpv_hvname_match||5.014000|
 stdize_locale|||
 store_cop_label|||
 strEQ|||
@@ -3445,6 +3680,7 @@ sub_crush_depth|||
 sublex_done|||
 sublex_push|||
 sublex_start|||
+sv_2bool_flags||5.013006|
 sv_2bool|||
 sv_2cv|||
 sv_2io|||
@@ -3454,7 +3690,7 @@ sv_2iv_flags||5.009001|
 sv_2iv|||
 sv_2mortal|||
 sv_2num|||
-sv_2nv|||
+sv_2nv_flags||5.013001|
 sv_2pv_flags|5.007002||p
 sv_2pv_nolen|5.006000||p
 sv_2pvbyte_nolen|5.006000||p
@@ -3469,7 +3705,9 @@ sv_add_backref|||
 sv_backoff|||
 sv_bless|||
 sv_cat_decode||5.008001|
+sv_catpv_flags||5.013006|
 sv_catpv_mg|5.004050||p
+sv_catpv_nomg||5.013006|
 sv_catpvf_mg_nocontext|||pvn
 sv_catpvf_mg|5.006000|5.004000|pv
 sv_catpvf_nocontext|||vn
@@ -3478,6 +3716,9 @@ sv_catpvn_flags||5.007002|
 sv_catpvn_mg|5.004050||p
 sv_catpvn_nomg|5.007002||p
 sv_catpvn|||
+sv_catpvs_flags||5.013006|
+sv_catpvs_mg||5.013006|
+sv_catpvs_nomg||5.013006|
 sv_catpvs|5.009003||p
 sv_catpv|||
 sv_catsv_flags||5.007002|
@@ -3485,24 +3726,33 @@ sv_catsv_mg|5.004050||p
 sv_catsv_nomg|5.007002||p
 sv_catsv|||
 sv_catxmlpvn|||
+sv_catxmlpv|||
 sv_catxmlsv|||
 sv_chop|||
 sv_clean_all|||
 sv_clean_objs|||
 sv_clear|||
+sv_cmp_flags||5.013006|
+sv_cmp_locale_flags||5.013006|
 sv_cmp_locale||5.004000|
 sv_cmp|||
+sv_collxfrm_flags||5.013006|
 sv_collxfrm|||
+sv_compile_2op_is_broken|||
 sv_compile_2op||5.008001|
 sv_copypv||5.007003|
+sv_dec_nomg||5.013002|
 sv_dec|||
 sv_del_backref|||
 sv_derived_from||5.004000|
 sv_destroyable||5.010000|
 sv_does||5.009004|
 sv_dump|||
+sv_dup_common|||
 sv_dup_inc_multiple|||
+sv_dup_inc|||
 sv_dup|||
+sv_eq_flags||5.013006|
 sv_eq|||
 sv_exp_grow|||
 sv_force_normal_flags||5.007001|
@@ -3513,6 +3763,7 @@ sv_free|||
 sv_gets||5.004000|
 sv_grow|||
 sv_i_ncmp|||
+sv_inc_nomg||5.013002|
 sv_inc|||
 sv_insert_flags||5.010001|
 sv_insert|||
@@ -3522,7 +3773,7 @@ sv_iv||5.005000|
 sv_kill_backrefs|||
 sv_len_utf8||5.006000|
 sv_len|||
-sv_magic_portable|5.011005|5.004000|p
+sv_magic_portable|5.014000|5.004000|p
 sv_magicext||5.007003|
 sv_magic|||
 sv_mortalcopy|||
@@ -3572,11 +3823,13 @@ sv_setpviv_mg||5.008001|
 sv_setpviv||5.008001|
 sv_setpvn_mg|5.004050||p
 sv_setpvn|||
+sv_setpvs_mg||5.013006|
 sv_setpvs|5.009004||p
 sv_setpv|||
 sv_setref_iv|||
 sv_setref_nv|||
 sv_setref_pvn|||
+sv_setref_pvs||5.013006|
 sv_setref_pv|||
 sv_setref_uv||5.007001|
 sv_setsv_cow|||
@@ -3591,6 +3844,7 @@ sv_taint||5.004000|
 sv_true||5.005000|
 sv_unglob|||
 sv_uni_display||5.007003|
+sv_unmagicext||5.013008|
 sv_unmagic|||
 sv_unref_flags||5.007001|
 sv_unref|||
@@ -3627,6 +3881,7 @@ sys_intern_init|||
 sys_term||5.010000|n
 taint_env|||
 taint_proper|||
+tied_method|||v
 tmps_grow||5.006000|
 toLOWER|||
 toUPPER|||
@@ -3651,11 +3906,14 @@ tokeq|||
 tokereport|||
 too_few_arguments|||
 too_many_arguments|||
+try_amagic_bin|||
+try_amagic_un|||
 uiv_2buf|||n
 unlnk|||
 unpack_rec|||
 unpack_str||5.007003|
 unpackstring||5.008001|
+unreferenced_to_tmp_stack|||
 unshare_hek_or_pvn|||
 unshare_hek|||
 unsharepvn||5.004000|
@@ -3669,6 +3927,7 @@ utf16_to_utf8||5.006001|
 utf8_distance||5.006000|
 utf8_hop||5.006000|
 utf8_length||5.007001|
+utf8_mg_len_cache_update|||
 utf8_mg_pos_cache_update|||
 utf8_to_bytes||5.006001|
 utf8_to_uvchr||5.007001|
@@ -3685,9 +3944,6 @@ varname|||
 vcmp||5.009000|
 vcroak||5.006000|
 vdeb||5.007003|
-vdie_common|||
-vdie_croak_common|||
-vdie|||
 vform||5.006000|
 visit|||
 vivify_defelem|||
@@ -3703,11 +3959,13 @@ vwarner||5.006000|
 vwarn||5.006000|
 wait4pid|||
 warn_nocontext|||vn
+warn_sv||5.013001|
 warner_nocontext|||vn
 warner|5.006000|5.004000|pv
 warn|||v
 watch|||
 whichsig|||
+with_queued_errors|||
 write_no_mem|||
 write_to_stderr|||
 xmldump_all_perl|||
@@ -3721,9 +3979,12 @@ xmldump_packsubs|||
 xmldump_sub_perl|||
 xmldump_sub|||
 xmldump_vindent|||
+xs_apiversion_bootcheck|||
+xs_version_bootcheck|||
 yyerror|||
 yylex|||
 yyparse|||
+yyunlex|||
 yywarn|||
 );
 
