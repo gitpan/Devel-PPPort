@@ -1361,7 +1361,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.19_03 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
+$VERSION = do { my @r = '$Snapshot: /Devel-PPPort/3.20 $' =~ /(\d+\.\d+(?:_\d+)?)/; @r ? $r[0] : '9.99' };
 
 sub _init_data
 {
@@ -5594,11 +5594,11 @@ typedef OP* (CPERLscope(*Perl_check_t)) (pTHX_ OP*);
 #endif
 
 #ifndef isASCII
-#  define isASCII(c)                     ((c) <= 127)
+#  define isASCII(c)                     ((U8) (c) <= 127)
 #endif
 
 #ifndef isCNTRL
-#  define isCNTRL(c)                     ((c) < ' ' || (c) == 127)
+#  define isCNTRL(c)                     ((U8) (c) < ' ' || (c) == 127)
 #endif
 
 #ifndef isGRAPH
