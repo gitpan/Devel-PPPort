@@ -4,10 +4,8 @@ author:
   - 'Marcus Holland-Moritz <mhx@cpan.org>'
 build_requires:
   ExtUtils::MakeMaker: 0
-configure_requires:
-  ExtUtils::MakeMaker: 0
 dynamic_config: 1
-generated_by: 'ExtUtils::MakeMaker version 6.64, CPAN::Meta::Converter version 2.120921'
+generated_by: 'ExtUtils::MakeMaker version 6.8, CPAN::Meta::Converter version 2.132830'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -17,5 +15,7 @@ no_index:
   directory:
     - t
     - inc
-requires: {}
-version: 3.21
+resources:
+  bugtracker: https://github.com/mhx/Devel-PPPort/issues/
+  repository: git://github.com/mhx/Devel-PPPort.git
+version: 3.22
