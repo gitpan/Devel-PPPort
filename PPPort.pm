@@ -30,6 +30,10 @@ Devel::PPPort - Perl/Pollution/Portability
     Devel::PPPort::WriteFile();   # defaults to ./ppport.h
     Devel::PPPort::WriteFile('someheader.h');
 
+    # Same as above but retrieve contents rather than write file
+    my $contents = Devel::PPPort::GetFileContents();
+    my $contents = Devel::PPPort::GetFileContents('someheader.h');
+
 =head1 DESCRIPTION
 
 Perl's API has changed over time, gaining new features, new functions,
@@ -39,11 +43,14 @@ typically F<ppport.h>, attempts to bring some of the newer Perl API
 features to older versions of Perl, so that you can worry less about
 keeping track of old releases, but users can still reap the benefit.
 
-C<Devel::PPPort> contains a single function, called C<WriteFile>. Its
-only purpose is to write the F<ppport.h> C header file. This file
-contains a series of macros and, if explicitly requested, functions that
-allow XS modules to be built using older versions of Perl. Currently,
-Perl versions from 5.003 to 5.11.5 are supported.
+C<Devel::PPPort> contains two functions, C<WriteFile> and C<GetFileContents>.
+C<WriteFile>'s only purpose is to write the F<ppport.h> C header file.
+This file contains a series of macros and, if explicitly requested, functions
+that allow XS modules to be built using older versions of Perl. Currently,
+Perl versions from 5.003 to 5.20 are supported.
+
+C<GetFileContents> can be used to retrieve the file contents rather than
+writing it out.
 
 This module is used by C<h2xs> to write the file F<ppport.h>.
 
@@ -95,9 +102,14 @@ no arguments, it defaults to the filename F<ppport.h>.
 The function returns a true value if the file was written successfully.
 Otherwise it returns a false value.
 
+=head2 GetFileContents
+
+C<GetFileContents> behaves like C<WriteFile> above, but returns the contents
+of the would-be file rather than writing it out.
+
 =head1 COMPATIBILITY
 
-F<ppport.h> supports Perl versions from 5.003 to 5.11.5
+F<ppport.h> supports Perl versions from 5.003 to 5.20
 in threaded and non-threaded configurations.
 
 =head2 Provided Perl compatibility API
@@ -176,6 +188,7 @@ in older Perl releases:
     gv_stashpvs
     GvSVn
     HEf_SVKEY
+    HeUTF8
     hv_fetchs
     hv_stores
     HvNAME_get
@@ -1491,8 +1504,8 @@ Perl below which it is unsupported:
 =head1 BUGS
 
 If you find any bugs, C<Devel::PPPort> doesn't seem to build on your
-system or any of its tests fail, please use the CPAN Request Tracker
-at L<http://rt.cpan.org/> to create a ticket for the module.
+system, or any of its tests fail, please file an issue here:
+L<https://github.com/mhx/Devel-PPPort/issues/>
 
 =head1 AUTHORS
 
@@ -1538,7 +1551,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = '3.22';
+$VERSION = '3.23';
 
 sub _init_data
 {
@@ -1550,15 +1563,21 @@ sub _init_data
   $data =~ s/^\|>//gm;
 }
 
-sub WriteFile
-{
+sub GetFileContents {
   my $file = shift || 'ppport.h';
   defined $data or _init_data();
   my $copy = $data;
   $copy =~ s/\bppport\.h\b/$file/g;
 
+  return $copy;
+}
+
+sub WriteFile
+{
+  my $file = shift || 'ppport.h';
+  my $data = GetFileContents($file);
   open F, ">$file" or return undef;
-  print F $copy;
+  print F $data;
   close F;
 
   return 1;
@@ -1625,7 +1644,7 @@ SKIP
 |>=head1 COMPATIBILITY
 |>
 |>This version of F<ppport.h> is designed to support operation with Perl
-|>installations back to 5.003, and has been tested up to 5.11.5.
+|>installations back to 5.003, and has been tested up to 5.20.
 |>
 |>=head1 OPTIONS
 |>
@@ -1896,7 +1915,7 @@ SKIP
 |>
 |>If F<ppport.h> was generated using the latest version of
 |>C<Devel::PPPort> and is causing failure of this module, please
-|>file a bug report using the CPAN Request Tracker at L<http://rt.cpan.org/>.
+|>file a bug report here: L<https://github.com/mhx/Devel-PPPort/issues/>
 |>
 |>Please include the following information:
 |>
@@ -2078,7 +2097,7 @@ HePV||5.004000|
 HeSVKEY_force||5.004000|
 HeSVKEY_set||5.004000|
 HeSVKEY||5.004000|
-HeUTF8||5.010001|
+HeUTF8|5.010001|5.010001|p
 HeVAL||5.004000|
 HvENAMELEN||5.015004|
 HvENAMEUTF8||5.015004|
@@ -5985,6 +6004,16 @@ typedef OP* (CPERLscope(*Perl_check_t)) (pTHX_ OP*);
 
 #ifndef isXDIGIT
 #  define isXDIGIT(c)                    (isDIGIT(c) || ((c) >= 'a' && (c) <= 'f') || ((c) >= 'A' && (c) <= 'F'))
+#endif
+
+#endif
+
+/* Until we figure out how to support this in older perls... */
+#if (PERL_BCDVERSION >= 0x5008000)
+#ifndef HeUTF8
+#  define HeUTF8(he)                     ((HeKLEN(he) == HEf_SVKEY) ?            \
+                                 SvUTF8(HeKEY_sv(he)) :                 \
+                                 (U32)HeKUTF8(he))
 #endif
 
 #endif
