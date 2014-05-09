@@ -20,4 +20,4 @@ no_index:
 resources:
   bugtracker: https://github.com/mhx/Devel-PPPort/issues/
   repository: git://github.com/mhx/Devel-PPPort.git
-version: '3.23'
+version: '3.24'

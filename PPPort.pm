@@ -503,7 +503,6 @@ in older Perl releases:
     SvPVbyte
     SvPVX_const
     SvPVX_mutable
-    SvREFCNT_dec_NN
     SvREFCNT_inc
     SvREFCNT_inc_NN
     SvREFCNT_inc_simple
@@ -1551,7 +1550,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = '3.23';
+$VERSION = '3.24';
 
 sub _init_data
 {
@@ -2525,7 +2524,7 @@ SvPVutf8x||5.006000|
 SvPVutf8||5.006000|
 SvPVx|||
 SvPV|||
-SvREFCNT_dec_NN|5.017007|5.017007|p
+SvREFCNT_dec_NN||5.017007|
 SvREFCNT_dec|||
 SvREFCNT_inc_NN|5.009004||p
 SvREFCNT_inc_simple_NN|5.009004||p
@@ -6688,20 +6687,6 @@ DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv)
 #  else
 #    define SvREFCNT_inc_void(sv) \
           (void)((PL_Sv=(SV*)(sv)) ? ++(SvREFCNT(PL_Sv)) : 0)
-#  endif
-#endif
-
-#ifndef SvREFCNT_dec_NN
-#  ifdef PERL_USE_GCC_BRACE_GROUPS
-#    define SvREFCNT_dec_NN(sv)        \
-      ({                               \
-          SV * const _sv = (SV*)(sv);  \
-          SvREFCNT(_sv)--;             \
-          _sv;                         \
-      })
-#  else
-#    define SvREFCNT_dec_NN(sv) \
-          (PL_Sv=(SV*)(sv),--(SvREFCNT(PL_Sv)),PL_Sv)
 #  endif
 #endif
 #ifndef SvREFCNT_inc_simple_void
